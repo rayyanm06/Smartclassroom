@@ -13,7 +13,7 @@ import {
   MOCK_BLOCK_TEMP,
 } from './mocks/data';
 
-const USE_MOCKS = import.meta.env.VITE_USE_MOCKS !== 'false';
+const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export interface ApiClient {
@@ -122,7 +122,11 @@ const HttpAdapter: ApiClient = {
   async getClassroom(id: string): Promise<ClassroomWithState> {
     const res = await fetch(`${API_BASE}/api/classrooms/${id}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
+    const data = await res.json();
+    return {
+      ...data.classroom,
+      state: data.state,
+    };
   },
 
   async getAlerts(params?: { status?: string; classroom_id?: string }): Promise<Alert[]> {

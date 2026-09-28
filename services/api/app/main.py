@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import health, classrooms, timetable, settings as settings_router, ingest
+from app.routers import health, classrooms, timetable, settings as settings_router, ingest, dashboard, alerts
 
 app = FastAPI(
     title="Smart Classroom Management API",
@@ -23,6 +23,8 @@ app.include_router(classrooms.router)
 app.include_router(timetable.router)
 app.include_router(settings_router.router)
 app.include_router(ingest.router)
+app.include_router(dashboard.router)
+app.include_router(alerts.router)
 
 @app.get("/")
 def root():
