@@ -1,0 +1,14 @@
+cameras:
+  - classroom_id: "A101"
+    camera_id: "phone-a101"
+    # Source options:
+    # 1. Phone IP Webcam: "http://<PHONE_IP>:8080/video"
+    # 2. DroidCam: "http://<PHONE_IP>:4747/video"
+    # 3. Built-in USB/Laptop Webcam index: 0
+    # 4. RTSP stream: "rtsp://..."
+    # 5. Local video test file: "test.mp4"
+    source: 0 # Default to local camera index (or phone URL when connected)
+    roi: null
+    model: "yolo11n.pt"
+    conf: 0.35
+    imgsz: 640
