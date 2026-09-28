@@ -1,0 +1,1800 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Smart Classroom Management API",
+    "description": "Multi-source classroom occupancy, sensor fusion, and resource management engine.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/classrooms": {
+      "get": {
+        "tags": [
+          "classrooms"
+        ],
+        "summary": "List Classrooms",
+        "description": "Returns list of classrooms joined with their current live state (\u00a77.2).",
+        "operationId": "list_classrooms_api_classrooms_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ClassroomWithStateResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Classrooms Api Classrooms Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "classrooms"
+        ],
+        "summary": "Create Classroom",
+        "description": "Creates a new classroom and provisions default classroom_state.",
+        "operationId": "create_classroom_api_classrooms_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassroomCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassroomResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/classrooms/{classroom_id}": {
+      "get": {
+        "tags": [
+          "classrooms"
+        ],
+        "summary": "Get Classroom Detail",
+        "description": "Returns detailed room status: state + active & next timetable entry + open alerts (\u00a77.2).",
+        "operationId": "get_classroom_detail_api_classrooms__classroom_id__get",
+        "parameters": [
+          {
+            "name": "classroom_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Classroom Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Classroom Detail Api Classrooms  Classroom Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "classrooms"
+        ],
+        "summary": "Update Classroom",
+        "operationId": "update_classroom_api_classrooms__classroom_id__put",
+        "parameters": [
+          {
+            "name": "classroom_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Classroom Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassroomUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassroomResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "classrooms"
+        ],
+        "summary": "Delete Classroom",
+        "operationId": "delete_classroom_api_classrooms__classroom_id__delete",
+        "parameters": [
+          {
+            "name": "classroom_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Classroom Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/classrooms/{classroom_id}/history": {
+      "get": {
+        "tags": [
+          "classrooms"
+        ],
+        "summary": "Get Classroom History",
+        "description": "Returns snapshot history series for occupancy, temperature, and appliance status.",
+        "operationId": "get_classroom_history_api_classrooms__classroom_id__history_get",
+        "parameters": [
+          {
+            "name": "classroom_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Classroom Id"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "name": "resolution",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "1m",
+              "title": "Resolution"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/timetable": {
+      "get": {
+        "tags": [
+          "timetable"
+        ],
+        "summary": "Get Timetable",
+        "operationId": "get_timetable_api_timetable_get",
+        "parameters": [
+          {
+            "name": "classroom_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Classroom Id"
+            }
+          },
+          {
+            "name": "day",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 6,
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Day"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TimetableEntryResponse"
+                  },
+                  "title": "Response Get Timetable Api Timetable Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "timetable"
+        ],
+        "summary": "Create Timetable Entry",
+        "operationId": "create_timetable_entry_api_timetable_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimetableEntryCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimetableEntryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/timetable/{entry_id}": {
+      "put": {
+        "tags": [
+          "timetable"
+        ],
+        "summary": "Update Timetable Entry",
+        "operationId": "update_timetable_entry_api_timetable__entry_id__put",
+        "parameters": [
+          {
+            "name": "entry_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Entry Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimetableEntryUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimetableEntryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "timetable"
+        ],
+        "summary": "Delete Timetable Entry",
+        "operationId": "delete_timetable_entry_api_timetable__entry_id__delete",
+        "parameters": [
+          {
+            "name": "entry_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Entry Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/settings": {
+      "get": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Get Settings",
+        "operationId": "get_settings_api_settings_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Update Settings",
+        "operationId": "update_settings_api_settings_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettingsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/settings/preset/{name}": {
+      "post": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Switch Preset",
+        "operationId": "switch_preset_api_settings_preset__name__post",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sensor-data": {
+      "post": {
+        "tags": [
+          "ingest"
+        ],
+        "summary": "Ingest Sensor Data",
+        "description": "Ingests raw sensor telemetry from either the sensor-sim or physical ESP32 (\u00a77.1).\nProtected by X-Device-Key header.",
+        "operationId": "ingest_sensor_data_api_sensor_data_post",
+        "parameters": [
+          {
+            "name": "X-Device-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "X-Device-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SensorEventSchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/classrooms/{classroom_id}/commands/pending": {
+      "get": {
+        "tags": [
+          "ingest"
+        ],
+        "summary": "Get Pending Commands",
+        "description": "Returns queued appliance commands awaiting execution by device (\u00a77.1).",
+        "operationId": "get_pending_commands_api_classrooms__classroom_id__commands_pending_get",
+        "parameters": [
+          {
+            "name": "classroom_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Classroom Id"
+            }
+          },
+          {
+            "name": "X-Device-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "X-Device-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PendingCommandResponse"
+                  },
+                  "title": "Response Get Pending Commands Api Classrooms  Classroom Id  Commands Pending Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/commands/{command_id}/ack": {
+      "post": {
+        "tags": [
+          "ingest"
+        ],
+        "summary": "Acknowledge Command",
+        "description": "Acknowledges appliance command execution by device (\u00a77.1).",
+        "operationId": "acknowledge_command_api_commands__command_id__ack_post",
+        "parameters": [
+          {
+            "name": "command_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Command Id"
+            }
+          },
+          {
+            "name": "X-Device-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "X-Device-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AckResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AckResponse": {
+        "properties": {
+          "acked": {
+            "type": "boolean",
+            "title": "Acked",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "AckResponse"
+      },
+      "ClassroomCreate": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "building": {
+            "type": "string",
+            "title": "Building"
+          },
+          "floor": {
+            "type": "integer",
+            "title": "Floor",
+            "default": 1
+          },
+          "capacity": {
+            "type": "integer",
+            "title": "Capacity",
+            "default": 40
+          },
+          "room_type": {
+            "type": "string",
+            "title": "Room Type",
+            "default": "lecture"
+          },
+          "has_camera": {
+            "type": "boolean",
+            "title": "Has Camera",
+            "default": false
+          },
+          "has_pir": {
+            "type": "boolean",
+            "title": "Has Pir",
+            "default": true
+          },
+          "has_dht": {
+            "type": "boolean",
+            "title": "Has Dht",
+            "default": true
+          },
+          "ac_rated_kw": {
+            "type": "number",
+            "title": "Ac Rated Kw",
+            "default": 1.5
+          },
+          "lights_rated_kw": {
+            "type": "number",
+            "title": "Lights Rated Kw",
+            "default": 0.3
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "building"
+        ],
+        "title": "ClassroomCreate"
+      },
+      "ClassroomResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "building": {
+            "type": "string",
+            "title": "Building"
+          },
+          "floor": {
+            "type": "integer",
+            "title": "Floor",
+            "default": 1
+          },
+          "capacity": {
+            "type": "integer",
+            "title": "Capacity",
+            "default": 40
+          },
+          "room_type": {
+            "type": "string",
+            "title": "Room Type",
+            "default": "lecture"
+          },
+          "has_camera": {
+            "type": "boolean",
+            "title": "Has Camera",
+            "default": false
+          },
+          "has_pir": {
+            "type": "boolean",
+            "title": "Has Pir",
+            "default": true
+          },
+          "has_dht": {
+            "type": "boolean",
+            "title": "Has Dht",
+            "default": true
+          },
+          "ac_rated_kw": {
+            "type": "number",
+            "title": "Ac Rated Kw",
+            "default": 1.5
+          },
+          "lights_rated_kw": {
+            "type": "number",
+            "title": "Lights Rated Kw",
+            "default": 0.3
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active",
+            "default": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "building",
+          "created_at"
+        ],
+        "title": "ClassroomResponse"
+      },
+      "ClassroomStateResponse": {
+        "properties": {
+          "classroom_id": {
+            "type": "string",
+            "title": "Classroom Id"
+          },
+          "occupancy_state": {
+            "type": "string",
+            "title": "Occupancy State"
+          },
+          "confidence_level": {
+            "type": "string",
+            "title": "Confidence Level"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons"
+          },
+          "people_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "People Count"
+          },
+          "expected_occupancy": {
+            "type": "boolean",
+            "title": "Expected Occupancy"
+          },
+          "timetable_entry_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timetable Entry Id"
+          },
+          "last_camera_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Camera At"
+          },
+          "last_camera_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Camera Count"
+          },
+          "last_sensor_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Sensor At"
+          },
+          "last_motion_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Motion At"
+          },
+          "last_presence_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Presence At"
+          },
+          "idle_minutes": {
+            "type": "integer",
+            "title": "Idle Minutes"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature"
+          },
+          "humidity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Humidity"
+          },
+          "ac_status": {
+            "type": "boolean",
+            "title": "Ac Status"
+          },
+          "light_status": {
+            "type": "boolean",
+            "title": "Light Status"
+          },
+          "camera_online": {
+            "type": "boolean",
+            "title": "Camera Online"
+          },
+          "sensor_online": {
+            "type": "boolean",
+            "title": "Sensor Online"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "classroom_id",
+          "occupancy_state",
+          "confidence_level",
+          "reasons",
+          "expected_occupancy",
+          "idle_minutes",
+          "ac_status",
+          "light_status",
+          "camera_online",
+          "sensor_online",
+          "updated_at"
+        ],
+        "title": "ClassroomStateResponse"
+      },
+      "ClassroomUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "building": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Building"
+          },
+          "floor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Floor"
+          },
+          "capacity": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity"
+          },
+          "room_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Room Type"
+          },
+          "has_camera": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Has Camera"
+          },
+          "has_pir": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Has Pir"
+          },
+          "has_dht": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Has Dht"
+          },
+          "ac_rated_kw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ac Rated Kw"
+          },
+          "lights_rated_kw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lights Rated Kw"
+          },
+          "active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active"
+          }
+        },
+        "type": "object",
+        "title": "ClassroomUpdate"
+      },
+      "ClassroomWithStateResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "building": {
+            "type": "string",
+            "title": "Building"
+          },
+          "floor": {
+            "type": "integer",
+            "title": "Floor",
+            "default": 1
+          },
+          "capacity": {
+            "type": "integer",
+            "title": "Capacity",
+            "default": 40
+          },
+          "room_type": {
+            "type": "string",
+            "title": "Room Type",
+            "default": "lecture"
+          },
+          "has_camera": {
+            "type": "boolean",
+            "title": "Has Camera",
+            "default": false
+          },
+          "has_pir": {
+            "type": "boolean",
+            "title": "Has Pir",
+            "default": true
+          },
+          "has_dht": {
+            "type": "boolean",
+            "title": "Has Dht",
+            "default": true
+          },
+          "ac_rated_kw": {
+            "type": "number",
+            "title": "Ac Rated Kw",
+            "default": 1.5
+          },
+          "lights_rated_kw": {
+            "type": "number",
+            "title": "Lights Rated Kw",
+            "default": 0.3
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active",
+            "default": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClassroomStateResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "building",
+          "created_at"
+        ],
+        "title": "ClassroomWithStateResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "PendingCommandResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "classroom_id": {
+            "type": "string",
+            "title": "Classroom Id"
+          },
+          "device": {
+            "type": "string",
+            "title": "Device"
+          },
+          "command": {
+            "type": "string",
+            "title": "Command"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "classroom_id",
+          "device",
+          "command"
+        ],
+        "title": "PendingCommandResponse"
+      },
+      "SensorEventSchema": {
+        "properties": {
+          "classroom_id": {
+            "type": "string",
+            "title": "Classroom Id"
+          },
+          "device_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id"
+          },
+          "pir_motion": {
+            "type": "boolean",
+            "title": "Pir Motion",
+            "default": false
+          },
+          "event": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 60.0,
+                "minimum": -10.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature"
+          },
+          "humidity": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Humidity"
+          },
+          "ac_status": {
+            "type": "boolean",
+            "title": "Ac Status",
+            "default": false
+          },
+          "light_status": {
+            "type": "boolean",
+            "title": "Light Status",
+            "default": false
+          },
+          "wifi_rssi": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wifi Rssi"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "simulation",
+              "esp32"
+            ],
+            "title": "Source",
+            "default": "simulation"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "classroom_id"
+        ],
+        "title": "SensorEventSchema"
+      },
+      "SettingsResponse": {
+        "properties": {
+          "preset": {
+            "type": "string",
+            "title": "Preset"
+          },
+          "values": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Values"
+          }
+        },
+        "type": "object",
+        "required": [
+          "preset",
+          "values"
+        ],
+        "title": "SettingsResponse"
+      },
+      "SettingsUpdate": {
+        "properties": {
+          "preset": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "production",
+                  "demo"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preset"
+          },
+          "values": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Values",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "title": "SettingsUpdate"
+      },
+      "TimetableEntryCreate": {
+        "properties": {
+          "classroom_id": {
+            "type": "string",
+            "title": "Classroom Id"
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject"
+          },
+          "faculty": {
+            "type": "string",
+            "title": "Faculty"
+          },
+          "day_of_week": {
+            "type": "integer",
+            "title": "Day Of Week"
+          },
+          "start_time": {
+            "type": "string",
+            "format": "time",
+            "title": "Start Time"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "time",
+            "title": "End Time"
+          },
+          "class_type": {
+            "type": "string",
+            "title": "Class Type",
+            "default": "lecture"
+          },
+          "valid_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid To"
+          }
+        },
+        "type": "object",
+        "required": [
+          "classroom_id",
+          "subject",
+          "faculty",
+          "day_of_week",
+          "start_time",
+          "end_time"
+        ],
+        "title": "TimetableEntryCreate"
+      },
+      "TimetableEntryResponse": {
+        "properties": {
+          "classroom_id": {
+            "type": "string",
+            "title": "Classroom Id"
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject"
+          },
+          "faculty": {
+            "type": "string",
+            "title": "Faculty"
+          },
+          "day_of_week": {
+            "type": "integer",
+            "title": "Day Of Week"
+          },
+          "start_time": {
+            "type": "string",
+            "format": "time",
+            "title": "Start Time"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "time",
+            "title": "End Time"
+          },
+          "class_type": {
+            "type": "string",
+            "title": "Class Type",
+            "default": "lecture"
+          },
+          "valid_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid To"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "classroom_id",
+          "subject",
+          "faculty",
+          "day_of_week",
+          "start_time",
+          "end_time",
+          "id",
+          "created_at"
+        ],
+        "title": "TimetableEntryResponse"
+      },
+      "TimetableEntryUpdate": {
+        "properties": {
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject"
+          },
+          "faculty": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Faculty"
+          },
+          "day_of_week": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Day Of Week"
+          },
+          "start_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Time"
+          },
+          "end_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Time"
+          },
+          "class_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Class Type"
+          },
+          "valid_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid To"
+          }
+        },
+        "type": "object",
+        "title": "TimetableEntryUpdate"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
