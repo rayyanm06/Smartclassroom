@@ -1,0 +1,124 @@
+@import "tailwindcss";
+
+/* Self-hosted fonts (§3, §21) */
+@import "@fontsource/archivo/400.css";
+@import "@fontsource/archivo/600.css";
+@import "@fontsource/archivo/700.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/600.css";
+@import "@fontsource/ibm-plex-mono/700.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+
+@theme {
+  --color-paper: #F4F1EA;
+  --color-ink: #111111;
+  --color-panel: #FFFFFF;
+  --color-muted: #6B6B6B;
+  --color-border-ink: #111111;
+  
+  --color-state-occupied: #2F9E44;
+  --color-state-empty: #9AA0A6;
+  --color-state-expected: #2F6FDE;
+  --color-state-unexpected: #F2A900;
+  --color-state-anomaly: #D64545;
+  --color-state-uncertain: #7A6FA8;
+  --color-notice-yellow: #F2C94C;
+
+  --font-heading: "Archivo", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  
+  --shadow-neo: 3px 3px 0 #111111;
+  --shadow-neo-sm: 2px 2px 0 #111111;
+  --shadow-neo-lg: 4px 4px 0 #111111;
+  --shadow-neo-hover: 1px 1px 0 #111111;
+}
+
+:root {
+  color-scheme: light;
+  background-color: #F4F1EA;
+  color: #111111;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: #F4F1EA;
+  color: #111111;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Neo-Brutalism standard utilities */
+.border-ink {
+  border: 2px solid #111111;
+}
+
+.border-ink-1 {
+  border: 1px solid #111111;
+}
+
+.shadow-neo {
+  box-shadow: 3px 3px 0 #111111;
+}
+
+.shadow-neo-sm {
+  box-shadow: 2px 2px 0 #111111;
+}
+
+.shadow-neo-lg {
+  box-shadow: 4px 4px 0 #111111;
+}
+
+.neo-card {
+  background-color: #FFFFFF;
+  border: 2px solid #111111;
+  border-radius: 2px;
+  box-shadow: 3px 3px 0 #111111;
+}
+
+.neo-btn {
+  background-color: #FFFFFF;
+  border: 2px solid #111111;
+  border-radius: 2px;
+  box-shadow: 2px 2px 0 #111111;
+  font-weight: 600;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.neo-btn:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #111111;
+}
+
+.neo-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 #111111;
+}
+
+.neo-header-strip {
+  background-color: #111111;
+  color: #F4F1EA;
+  font-family: "Archivo", sans-serif;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.75rem;
+}
+
+.font-mono-numbers {
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.font-heading {
+  font-family: "Archivo", sans-serif;
+}
