@@ -1,0 +1,101 @@
+api_url: "http://localhost:8000"
+device_key: "dev-secret-device-key-2026"
+heartbeat_interval_sec: 10
+tick_interval_sec: 1.0
+
+rooms:
+  - id: "A101"
+    device_id: "esp32-a101"
+    capacity: 60
+    mode: "follow_camera" # Per §17, follows real camera for A101
+    has_ac: true
+    has_lights: true
+    ambient_temp: 31.5
+
+  - id: "A102"
+    device_id: "esp32-a102"
+    capacity: 40
+    mode: "auto"
+    has_ac: true
+    has_lights: true
+    ambient_temp: 32.0
+
+  - id: "A201"
+    device_id: "esp32-a201"
+    capacity: 50
+    mode: "auto"
+    has_ac: true
+    has_lights: true
+    ambient_temp: 31.0
+
+  - id: "B201"
+    device_id: "esp32-b201"
+    capacity: 60
+    mode: "auto"
+    has_ac: true
+    has_lights: true
+    ambient_temp: 32.5
+
+  - id: "B202"
+    device_id: "esp32-b202"
+    capacity: 35
+    mode: "auto"
+    has_ac: true
+    has_lights: true
+    ambient_temp: 33.0
+
+  - id: "B203"
+    device_id: "esp32-b203"
+    capacity: 70
+    mode: "auto"
+    has_ac: true
+    has_lights: true
+    ambient_temp: 31.8
+
+  - id: "C101"
+    device_id: "esp32-c101"
+    capacity: 50
+    mode: "auto"
+    has_ac: true
+    has_lights: true
+    ambient_temp: 32.0
+
+  - id: "C102"
+    device_id: "esp32-c102"
+    capacity: 50
+    mode: "auto"
+    has_ac: true
+    has_lights: true
+    ambient_temp: 32.2
+
+  - id: "C201"
+    device_id: "esp32-c201"
+    capacity: 80
+    mode: "auto"
+    has_ac: true
+    has_lights: true
+    ambient_temp: 31.0
+
+  - id: "D101"
+    device_id: "esp32-d101"
+    capacity: 30
+    mode: "auto"
+    has_ac: true
+    has_lights: true
+    ambient_temp: 32.8
+
+  - id: "D102"
+    device_id: "esp32-d102"
+    capacity: 45
+    mode: "auto"
+    has_ac: true
+    has_lights: true
+    ambient_temp: 33.0
+
+  - id: "D201"
+    device_id: "esp32-d201"
+    capacity: 40
+    mode: "auto"
+    has_ac: true
+    has_lights: true
+    ambient_temp: 32.5
