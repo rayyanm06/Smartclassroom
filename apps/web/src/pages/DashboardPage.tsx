@@ -62,7 +62,7 @@ export const DashboardPage: React.FC = () => {
       ? classrooms
       : classrooms.filter((c) => c.building === selectedBlock);
 
-  const a101Classroom = classrooms.find((c) => c.id === 'A101') || classrooms[0];
+  const cameraClassroom = classrooms.find((c) => c.has_camera) || classrooms[0];
 
   return (
     <div className="space-y-5">
@@ -189,10 +189,10 @@ export const DashboardPage: React.FC = () => {
             onResolve={(id) => resolveMutation.mutate(id)}
           />
 
-          {a101Classroom && (
+          {cameraClassroom && (
             <CameraPanel
-              classroom={a101Classroom}
-              streamUrl="http://localhost:8001/stream/A101.mjpg"
+              classroom={cameraClassroom}
+              streamUrl={`http://localhost:8001/stream/${cameraClassroom.id}.mjpg`}
             />
           )}
         </div>

@@ -72,7 +72,9 @@ export interface TimetableEntry {
   day_of_week: number; // 0=Mon ... 6=Sun
   start_time: string; // "10:00:00"
   end_time: string; // "11:00:00"
-  class_type: 'lecture' | 'lab' | 'tutorial' | 'exam' | 'other';
+  class_type: 'lecture' | 'lab' | 'tutorial' | 'exam' | 'other' | string;
+  division?: string | null;
+  batch?: string | null;
   valid_from: string | null;
   valid_to: string | null;
 }

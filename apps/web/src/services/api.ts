@@ -4,6 +4,7 @@ import type {
   Alert,
   OccupancyCurvePoint,
   BlockAvgTemp,
+  TimetableEntry,
 } from '../types';
 import {
   MOCK_CLASSROOMS,
@@ -29,6 +30,7 @@ export interface ApiClient {
     classroomId: string,
     action: { device: 'ac' | 'light'; command: 'on' | 'off' }
   ): Promise<{ command_id: number; status: string }>;
+  getTimetable(classroomId?: string): Promise<TimetableEntry[]>;
 }
 
 // In-memory mock adapter state
@@ -104,6 +106,10 @@ const MockAdapter: ApiClient = {
     });
     return Promise.resolve({ command_id: Math.floor(Math.random() * 1000), status: 'pending' });
   },
+
+  async getTimetable(_classroomId?: string): Promise<TimetableEntry[]> {
+    return Promise.resolve([]);
+  },
 };
 
 const HttpAdapter: ApiClient = {
@@ -171,6 +177,13 @@ const HttpAdapter: ApiClient = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(action),
     });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+
+  async getTimetable(classroomId?: string): Promise<TimetableEntry[]> {
+    const query = classroomId ? `?classroom_id=${classroomId}` : '';
+    const res = await fetch(`${API_BASE}/api/timetable${query}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   },

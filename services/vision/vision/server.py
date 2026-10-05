@@ -24,6 +24,7 @@ def generate_mjpeg_stream(classroom_id: str) -> Generator[bytes, None, None]:
     source = camera_sources.get(classroom_id)
     detector = camera_detectors.get(classroom_id)
 
+    served_count = 0
     while True:
         if not source or not source.is_connected():
             # Generate clean offline frame
@@ -31,15 +32,19 @@ def generate_mjpeg_stream(classroom_id: str) -> Generator[bytes, None, None]:
             cv2.putText(frame, f"CAMERA {classroom_id} OFFLINE", (140, 240),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 200), 2)
         else:
-            raw_frame = source.read_latest()
-            if raw_frame is None:
+            frame = None
+            if detector:
+                frame = detector.get_latest_annotated_frame()
+            if frame is None:
+                frame = source.read_latest()
+
+            if frame is None:
                 time.sleep(0.04)
                 continue
 
-            if detector:
-                frame, count, conf = detector.annotate(raw_frame)
-            else:
-                frame = raw_frame
+        served_count += 1
+        if served_count == 1 or served_count % 150 == 0:
+            print(f"[Server] Serving MJPEG frame #{served_count} for {classroom_id}: shape={frame.shape}, mean={float(np.mean(frame)):.1f}")
 
         # Encode to JPEG
         ret, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
@@ -71,12 +76,26 @@ def status():
         }
     return result
 
+@app.get("/stream")
+@app.get("/stream.mjpg")
 @app.get("/stream/{classroom_id}.mjpg")
-def stream_mjpeg(classroom_id: str):
-    if classroom_id not in camera_sources:
-        raise HTTPException(status_code=404, detail=f"No camera configured for room '{classroom_id}'.")
+def stream_mjpeg(classroom_id: str = "508"):
+    target_id = classroom_id
+    if target_id not in camera_sources:
+        # Check case-insensitive match
+        for k in camera_sources.keys():
+            if str(k).strip().lower() == str(classroom_id).strip().lower():
+                target_id = k
+                break
+        else:
+            # Fallback to the first available camera source if any exists
+            if camera_sources:
+                target_id = next(iter(camera_sources.keys()))
+            else:
+                raise HTTPException(status_code=404, detail=f"No camera configured for room '{classroom_id}'.")
 
     return StreamingResponse(
-        generate_mjpeg_stream(classroom_id),
+        generate_mjpeg_stream(target_id),
         media_type="multipart/x-mixed-replace; boundary=frame"
     )
+

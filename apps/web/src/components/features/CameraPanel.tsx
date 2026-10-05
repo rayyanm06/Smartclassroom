@@ -9,9 +9,10 @@ interface CameraPanelProps {
 
 export const CameraPanel: React.FC<CameraPanelProps> = ({
   classroom,
-  streamUrl = 'http://localhost:8001/stream/A101.mjpg',
+  streamUrl,
 }) => {
   const [streamError, setStreamError] = useState(false);
+  const activeStreamUrl = streamUrl || `http://localhost:8001/stream/${classroom?.id || '508'}.mjpg`;
 
   return (
     <div className="neo-card p-4 space-y-3 bg-white">
@@ -45,7 +46,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
         ) : (
           <>
             <img
-              src={streamUrl}
+              src={activeStreamUrl}
               alt={`Live annotated feed for ${classroom.id}`}
               onError={() => setStreamError(true)}
               className="w-full h-full object-cover"
@@ -60,7 +61,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
       </div>
 
       {/* Live Metrics Grid */}
-      <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
         <div className="p-2 bg-[#F4F1EA] border border-neutral-300">
           <span className="text-neutral-500 block text-[9px]">PEOPLE DETECTED:</span>
           <span className="text-sm font-black text-[#111111]">
@@ -68,14 +69,28 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
           </span>
         </div>
         <div className="p-2 bg-[#F4F1EA] border border-neutral-300">
-          <span className="text-neutral-500 block text-[9px]">DETECTION CONFIDENCE:</span>
-          <span className="text-sm font-black text-[#2F9E44]">94%</span>
+          <span className="text-neutral-500 block text-[9px]">OCCUPANCY STATUS:</span>
+          <span className="text-sm font-black text-[#111111]">
+            {classroom.state.occupancy_state ?? 'EMPTY'}
+          </span>
+        </div>
+        <div className="p-2 bg-[#F4F1EA] border border-neutral-300">
+          <span className="text-neutral-500 block text-[9px]">CONFIDENCE:</span>
+          <span className="text-sm font-black text-[#2F9E44]">
+            {classroom.state.confidence_level?.toUpperCase() || 'HIGH'}
+          </span>
+        </div>
+        <div className="p-2 bg-[#F4F1EA] border border-neutral-300">
+          <span className="text-neutral-500 block text-[9px]">LAST CAMERA UPDATE:</span>
+          <span className="text-sm font-black text-[#111111]">
+            {classroom.state.last_camera_at ? new Date(classroom.state.last_camera_at).toLocaleTimeString() : 'Live'}
+          </span>
         </div>
       </div>
 
       <div className="flex items-center justify-between text-[10px] font-mono text-neutral-500 pt-1 border-t border-neutral-200">
-        <span>Source: <strong>LIVE CAMERA (PHONE)</strong></span>
-        <span>No images/faces saved</span>
+        <span>Source: <strong>LIVE CAMERA (phone-508)</strong></span>
+        <span>No images/faces stored · Section 16 compliant</span>
       </div>
     </div>
   );

@@ -16,10 +16,10 @@ def test_list_classrooms():
     assert response.status_code == 200
     data = response.json()
     assert len(data) >= 12
-    a101 = next((r for r in data if r["id"] == "A101"), None)
-    assert a101 is not None
-    assert a101["has_camera"] is True
-    assert a101["state"]["classroom_id"] == "A101"
+    r508 = next((r for r in data if r["id"] == "508"), None)
+    assert r508 is not None
+    assert r508["has_camera"] is True
+    assert r508["state"]["classroom_id"] == "508"
 
 def test_classroom_crud():
     test_id = "TEST999"
@@ -67,13 +67,13 @@ def test_classroom_crud():
     assert get_res.status_code == 404
 
 def test_timetable_overlap_returns_409():
-    room_id = "A101"
-    # Entry 1: Mon 12:00 to 13:00
+    room_id = "508"
+    # Entry 1: Sat 12:00 to 13:00
     entry1_payload = {
         "classroom_id": room_id,
         "subject": "Compiler Design",
         "faculty": "Prof. Rao",
-        "day_of_week": 0, # Monday
+        "day_of_week": 5, # Saturday
         "start_time": "12:00:00",
         "end_time": "13:00:00",
         "class_type": "lecture"
@@ -83,12 +83,12 @@ def test_timetable_overlap_returns_409():
     entry1_id = res1.json()["id"]
 
     try:
-        # Overlapping entry: Mon 12:30 to 13:30 (overlaps by 30 min)
+        # Overlapping entry: Sat 12:30 to 13:30 (overlaps by 30 min)
         overlap_payload = {
             "classroom_id": room_id,
             "subject": "Distributed Systems",
             "faculty": "Dr. Sen",
-            "day_of_week": 0,
+            "day_of_week": 5,
             "start_time": "12:30:00",
             "end_time": "13:30:00",
             "class_type": "lecture"
@@ -100,12 +100,12 @@ def test_timetable_overlap_returns_409():
         assert "conflicts" in err_data["message"].lower()
         assert err_data["conflicting_entry"]["id"] == entry1_id
 
-        # Back-to-back entry: Mon 13:00 to 14:00 (touching boundaries do NOT conflict)
+        # Back-to-back entry: Sat 13:00 to 14:00 (touching boundaries do NOT conflict)
         back_to_back_payload = {
             "classroom_id": room_id,
             "subject": "Network Security",
             "faculty": "Prof. Verma",
-            "day_of_week": 0,
+            "day_of_week": 5,
             "start_time": "13:00:00",
             "end_time": "14:00:00",
             "class_type": "lecture"

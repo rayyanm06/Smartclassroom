@@ -1,0 +1,60 @@
+.landing-root {
+  --e-paper: #F4F0E6;
+  --e-ink: #111111;
+  --e-void: #0B0B10;
+  --e-void-2: #14141C;
+  --e-fire-red: #FF3D00;
+  --e-fire-orange: #FF7A1A;
+  --e-fire-yellow: #FFD83D;
+  --e-white: #FFFFFF;
+  --e-cyan: #27C7E8;
+  --e-cyan-hot: #C8F7FF;
+  --e-alarm: #E53935;
+  --e-ok: #35C759;
+}
+
+.landing-root .e-sticker {
+  /* hard paper outline so black ink stays visible on dark panels */
+  filter:
+    drop-shadow(2px 0 0 var(--e-paper)) drop-shadow(-2px 0 0 var(--e-paper))
+    drop-shadow(0 2px 0 var(--e-paper)) drop-shadow(0 -2px 0 var(--e-paper));
+}
+
+.landing-root .e-halftone {
+  background-image: radial-gradient(rgba(255, 216, 61, 0.10) 1px, transparent 1.4px);
+  background-size: 10px 10px;
+}
+
+.landing-root .e-scanlines {
+  background-image: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.20) 0 1px, transparent 1px 3px);
+}
+
+.landing-root .e-rec {
+  animation: e-blink 1s steps(2, jump-none) infinite;
+}
+
+.landing-root .e-cursor {
+  animation: e-blink 1s steps(2, jump-none) infinite;
+}
+
+@keyframes e-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-root .e-rec,
+  .landing-root .e-cursor {
+    animation: none;
+  }
+}
+
+/* Landing route native scrollbar suppression (§6) */
+html.landing-active {
+  scrollbar-width: none;
+}
+
+html.landing-active::-webkit-scrollbar {
+  display: none;
+}

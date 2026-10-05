@@ -4,98 +4,145 @@ heartbeat_interval_sec: 10
 tick_interval_sec: 1.0
 
 rooms:
-  - id: "A101"
-    device_id: "esp32-a101"
-    capacity: 60
-    mode: "follow_camera" # Per §17, follows real camera for A101
-    has_ac: true
-    has_lights: true
-    ambient_temp: 31.5
-
-  - id: "A102"
-    device_id: "esp32-a102"
-    capacity: 40
-    mode: "auto"
-    has_ac: true
-    has_lights: true
-    ambient_temp: 32.0
-
-  - id: "A201"
-    device_id: "esp32-a201"
-    capacity: 50
-    mode: "auto"
+  # Primary Camera Room (follows camera YOLO detections)
+  - id: "508"
+    device_id: "esp32-508"
+    capacity: 80
+    mode: "follow_camera"
     has_ac: true
     has_lights: true
     ambient_temp: 31.0
 
-  - id: "B201"
-    device_id: "esp32-b201"
+  # Ground Floor Lecture Hall
+  - id: "002"
+    device_id: "esp32-002"
+    capacity: 75
+    mode: "auto"
+    has_ac: true
+    has_lights: true
+    ambient_temp: 30.5
+
+  # Second Floor
+  - id: "203"
+    device_id: "esp32-203"
     capacity: 60
     mode: "auto"
     has_ac: true
     has_lights: true
-    ambient_temp: 32.5
+    ambient_temp: 31.2
 
-  - id: "B202"
-    device_id: "esp32-b202"
+  # Third Floor Labs & Classrooms
+  - id: "303"
+    device_id: "esp32-303"
     capacity: 35
     mode: "auto"
     has_ac: true
     has_lights: true
-    ambient_temp: 33.0
+    ambient_temp: 29.8
 
-  - id: "B203"
-    device_id: "esp32-b203"
-    capacity: 70
+  - id: "305"
+    device_id: "esp32-305"
+    capacity: 50
     mode: "auto"
     has_ac: true
     has_lights: true
-    ambient_temp: 31.8
+    ambient_temp: 31.5
 
-  - id: "C101"
-    device_id: "esp32-c101"
+  # Fifth Floor
+  - id: "505"
+    device_id: "esp32-505"
+    capacity: 35
+    mode: "auto"
+    has_ac: true
+    has_lights: true
+    ambient_temp: 30.0
+
+  - id: "509"
+    device_id: "esp32-509"
+    capacity: 35
+    mode: "auto"
+    has_ac: true
+    has_lights: true
+    ambient_temp: 30.2
+
+  # Sixth Floor Labs & Classrooms
+  - id: "601"
+    device_id: "esp32-601"
     capacity: 50
     mode: "auto"
     has_ac: true
     has_lights: true
     ambient_temp: 32.0
 
-  - id: "C102"
-    device_id: "esp32-c102"
-    capacity: 50
-    mode: "auto"
-    has_ac: true
-    has_lights: true
-    ambient_temp: 32.2
-
-  - id: "C201"
-    device_id: "esp32-c201"
-    capacity: 80
-    mode: "auto"
-    has_ac: true
-    has_lights: true
-    ambient_temp: 31.0
-
-  - id: "D101"
-    device_id: "esp32-d101"
+  - id: "603-2"
+    device_id: "esp32-603-2"
     capacity: 30
     mode: "auto"
     has_ac: true
     has_lights: true
-    ambient_temp: 32.8
+    ambient_temp: 30.5
 
-  - id: "D102"
-    device_id: "esp32-d102"
-    capacity: 45
+  - id: "603-7"
+    device_id: "esp32-603-7"
+    capacity: 30
     mode: "auto"
     has_ac: true
     has_lights: true
-    ambient_temp: 33.0
+    ambient_temp: 30.0
 
-  - id: "D201"
-    device_id: "esp32-d201"
-    capacity: 40
+  - id: "604"
+    device_id: "esp32-604"
+    capacity: 35
     mode: "auto"
     has_ac: true
     has_lights: true
-    ambient_temp: 32.5
+    ambient_temp: 30.8
+
+  - id: "606-4"
+    device_id: "esp32-606-4"
+    capacity: 30
+    mode: "auto"
+    has_ac: true
+    has_lights: true
+    ambient_temp: 30.0
+
+  - id: "608"
+    device_id: "esp32-608"
+    capacity: 35
+    mode: "auto"
+    has_ac: true
+    has_lights: true
+    ambient_temp: 30.4
+
+  # Seventh Floor Labs
+  - id: "702-A"
+    device_id: "esp32-702-a"
+    capacity: 30
+    mode: "auto"
+    has_ac: true
+    has_lights: true
+    ambient_temp: 30.0
+
+  - id: "702-B"
+    device_id: "esp32-702-b"
+    capacity: 30
+    mode: "auto"
+    has_ac: true
+    has_lights: true
+    ambient_temp: 30.2
+
+  - id: "703-A"
+    device_id: "esp32-703-a"
+    capacity: 30
+    mode: "auto"
+    has_ac: true
+    has_lights: true
+    ambient_temp: 30.0
+
+  - id: "703-B"
+    device_id: "esp32-703-b"
+    capacity: 30
+    mode: "auto"
+    has_ac: true
+    has_lights: true
+    ambient_temp: 30.0

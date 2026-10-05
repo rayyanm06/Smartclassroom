@@ -37,30 +37,37 @@ class VideoCaptureSource(FrameSource):
         self._last_read_ts: float = 0.0
 
         self._thread = threading.Thread(target=self._capture_worker, daemon=True)
+        self._frame_count: int = 0
 
     def start(self):
         self._running = True
         self._thread.start()
 
     def _capture_worker(self):
-        backoff = 1.0
-        max_backoff = 30.0
+        backoff = 2.0
+        max_backoff = 5.0
 
         while self._running:
-            print(f"[Capture] Connecting to source {self.source}...")
-            cap = cv2.VideoCapture(self.source)
+            print(f"[Capture] Connecting to source {self.source}...", flush=True)
+            if isinstance(self.source, str) and (self.source.startswith("rtsp://") or self.source.startswith("http://")):
+                cap = cv2.VideoCapture(
+                    self.source,
+                    cv2.CAP_FFMPEG,
+                    [cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 3000, cv2.CAP_PROP_READ_TIMEOUT_MSEC, 3000]
+                )
+            else:
+                cap = cv2.VideoCapture(self.source)
 
             if not cap.isOpened():
                 self._connected = False
-                print(f"[Capture] Failed to open {self.source}. Backing off {backoff:.1f}s...")
+                print(f"[Capture] RTSP not responding on {self.source}. Retrying in {backoff:.1f}s (ensure app is open on iPhone)...", flush=True)
                 time.sleep(backoff)
-                backoff = min(max_backoff, backoff * 1.5)
                 continue
 
             # Connected successfully
             self._connected = True
-            backoff = 1.0
-            print(f"[Capture] Successfully connected to {self.source}")
+            backoff = 2.0
+            print(f"[Capture] Successfully connected to {self.source}", flush=True)
 
             # Drain frames loop: always grab newest, discard intermediate buffer
             frame_times = []
@@ -71,6 +78,11 @@ class VideoCaptureSource(FrameSource):
                     print(f"[Capture] Stream disconnected from {self.source}.")
                     self._connected = False
                     break
+
+                self._frame_count += 1
+                if self._frame_count == 1 or self._frame_count % 300 == 0:
+                    mean_val = float(np.mean(frame))
+                    print(f"[Capture] Frame #{self._frame_count} from {self.source}: shape={frame.shape}, dtype={frame.dtype}, mean={mean_val:.1f}")
 
                 with self._lock:
                     self._latest_frame = frame

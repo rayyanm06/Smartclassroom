@@ -19,6 +19,8 @@ from app.schemas.classroom import (
 )
 from app.engine.schedule import get_active_entry, get_next_entry
 
+from app.engine.occupancy import evaluate_classroom_occupancy
+
 router = APIRouter(prefix="/api/classrooms", tags=["classrooms"])
 
 @router.get("", response_model=List[ClassroomWithStateResponse])
@@ -26,6 +28,9 @@ def list_classrooms(db: Session = Depends(get_db)):
     """Returns list of classrooms joined with their current live state (§7.2)."""
     stmt = select(Classroom).order_by(Classroom.id)
     classrooms = db.scalars(stmt).all()
+    for c in classrooms:
+        evaluate_classroom_occupancy(c, db)
+    db.commit()
     return classrooms
 
 @router.post("", response_model=ClassroomResponse, status_code=status.HTTP_201_CREATED)
@@ -162,3 +167,28 @@ def get_classroom_history(
         }
         for s in reversed(snapshots)
     ]
+
+@router.post("/{classroom_id}/camera-telemetry")
+def update_camera_telemetry(
+    classroom_id: str,
+    payload: dict,
+    db: Session = Depends(get_db)
+):
+    """Updates camera person count and online status for classroom (§8, §16)."""
+    classroom = db.get(Classroom, classroom_id)
+    if not classroom:
+        raise HTTPException(status_code=404, detail=f"Classroom '{classroom_id}' not found.")
+
+    state = classroom.state
+    if state:
+        now_utc = system_clock.now_utc()
+        state.last_camera_at = now_utc
+        state.camera_online = payload.get("online", True)
+        if "people_count" in payload:
+            state.people_count = payload["people_count"]
+            state.last_camera_count = payload["people_count"]
+        
+        evaluate_classroom_occupancy(classroom, db)
+        db.commit()
+
+    return {"status": "ok", "people_count": state.people_count if state else None}

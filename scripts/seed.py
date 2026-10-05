@@ -2,62 +2,74 @@ import argparse
 import sys
 from pathlib import Path
 from datetime import time, date, datetime, timezone
+import json
 
-# Add services/api to sys.path
-API_DIR = Path(__file__).resolve().parent.parent / "services" / "api"
+ROOT_DIR = Path(__file__).resolve().parent.parent
+API_DIR = ROOT_DIR / "services" / "api"
 sys.path.insert(0, str(API_DIR))
+sys.path.insert(0, str(ROOT_DIR))
 
 from app.core.db import SessionLocal
 from app.models.classroom import Classroom, ClassroomState
 from app.models.timetable import TimetableEntry
 from app.models.setting import Setting
 from app.models.snapshot import OccupancySnapshot
+from app.models.sensor import SensorReading
+from app.models.alert import Alert
 from app.core.settings_defaults import PRESET_DEFAULTS
+from scripts.parse_timetable import extract_timetable
 
+# Authentic classrooms extracted directly from timetable.pdf
 CLASSROOMS_SEED = [
-    # Block A
-    {"id": "A101", "name": "Lecture Hall A101", "building": "Block A", "floor": 1, "capacity": 60, "room_type": "lecture", "has_camera": True, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.5, "lights_rated_kw": 0.3},
-    {"id": "A102", "name": "Classroom A102", "building": "Block A", "floor": 1, "capacity": 40, "room_type": "lecture", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.5, "lights_rated_kw": 0.3},
-    {"id": "A201", "name": "Seminar Room A201", "building": "Block A", "floor": 2, "capacity": 50, "room_type": "seminar", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 2.0, "lights_rated_kw": 0.4},
-    # Block B
-    {"id": "B201", "name": "Classroom B201", "building": "Block B", "floor": 2, "capacity": 60, "room_type": "lecture", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.5, "lights_rated_kw": 0.3},
-    {"id": "B202", "name": "Lab B202", "building": "Block B", "floor": 2, "capacity": 35, "room_type": "lab", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 2.2, "lights_rated_kw": 0.5},
-    {"id": "B203", "name": "Lecture Hall B203", "building": "Block B", "floor": 2, "capacity": 70, "room_type": "lecture", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.5, "lights_rated_kw": 0.3},
-    # Block C
-    {"id": "C101", "name": "Classroom C101", "building": "Block C", "floor": 1, "capacity": 50, "room_type": "lecture", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.5, "lights_rated_kw": 0.3},
-    {"id": "C102", "name": "Classroom C102", "building": "Block C", "floor": 1, "capacity": 50, "room_type": "lecture", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.5, "lights_rated_kw": 0.3},
-    {"id": "C201", "name": "Seminar Hall C201", "building": "Block C", "floor": 2, "capacity": 80, "room_type": "seminar", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 3.0, "lights_rated_kw": 0.8},
-    # Block D
-    {"id": "D101", "name": "Tutorial Room D101", "building": "Block D", "floor": 1, "capacity": 30, "room_type": "lecture", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.2, "lights_rated_kw": 0.25},
-    {"id": "D102", "name": "Classroom D102", "building": "Block D", "floor": 1, "capacity": 45, "room_type": "lecture", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.5, "lights_rated_kw": 0.3},
-    {"id": "D201", "name": "Lab D201", "building": "Block D", "floor": 2, "capacity": 40, "room_type": "lab", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 2.0, "lights_rated_kw": 0.4},
+    # Floor 0 (Ground Floor)
+    {"id": "002", "name": "Lecture Hall 002", "building": "Academic Block", "floor": 0, "capacity": 75, "room_type": "lecture", "has_camera": True, "has_pir": True, "has_dht": True, "ac_rated_kw": 2.2, "lights_rated_kw": 0.4},
+    # Floor 2
+    {"id": "203", "name": "Classroom 203", "building": "Academic Block", "floor": 2, "capacity": 60, "room_type": "lecture", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.8, "lights_rated_kw": 0.3},
+    # Floor 3
+    {"id": "303", "name": "IoT & Embedded Lab 303", "building": "Academic Block", "floor": 3, "capacity": 35, "room_type": "lab", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 2.0, "lights_rated_kw": 0.4},
+    {"id": "305", "name": "Classroom 305", "building": "Academic Block", "floor": 3, "capacity": 50, "room_type": "lecture", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.5, "lights_rated_kw": 0.3},
+    # Floor 5
+    {"id": "505", "name": "DSA & Computing Lab 505", "building": "Academic Block", "floor": 5, "capacity": 35, "room_type": "lab", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 2.0, "lights_rated_kw": 0.4},
+    {"id": "508", "name": "Main Lecture Hall 508", "building": "Academic Block", "floor": 5, "capacity": 80, "room_type": "lecture", "has_camera": True, "has_pir": True, "has_dht": True, "ac_rated_kw": 2.5, "lights_rated_kw": 0.5},
+    {"id": "509", "name": "Distributed Systems Lab 509", "building": "Academic Block", "floor": 5, "capacity": 35, "room_type": "lab", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 2.0, "lights_rated_kw": 0.4},
+    # Floor 6
+    {"id": "601", "name": "Classroom 601", "building": "Academic Block", "floor": 6, "capacity": 50, "room_type": "lecture", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.5, "lights_rated_kw": 0.3},
+    {"id": "603-2", "name": "Computing Lab 603-2", "building": "Academic Block", "floor": 6, "capacity": 30, "room_type": "lab", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.8, "lights_rated_kw": 0.35},
+    {"id": "603-3", "name": "Software Lab 603-3", "building": "Academic Block", "floor": 6, "capacity": 30, "room_type": "lab", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.8, "lights_rated_kw": 0.35},
+    {"id": "603-7", "name": "AISC Lab 603-7", "building": "Academic Block", "floor": 6, "capacity": 30, "room_type": "lab", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.8, "lights_rated_kw": 0.35},
+    {"id": "604", "name": "DC Systems Lab 604", "building": "Academic Block", "floor": 6, "capacity": 35, "room_type": "lab", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 2.0, "lights_rated_kw": 0.4},
+    {"id": "606-4", "name": "Software Eng Lab 606-4", "building": "Academic Block", "floor": 6, "capacity": 30, "room_type": "lab", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.8, "lights_rated_kw": 0.35},
+    {"id": "606-5", "name": "Networks Lab 606-5", "building": "Academic Block", "floor": 6, "capacity": 30, "room_type": "lab", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.8, "lights_rated_kw": 0.35},
+    {"id": "607-B", "name": "AI Lab 607-B", "building": "Academic Block", "floor": 6, "capacity": 30, "room_type": "lab", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.8, "lights_rated_kw": 0.35},
+    {"id": "608", "name": "Software Lab 608", "building": "Academic Block", "floor": 6, "capacity": 35, "room_type": "lab", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.8, "lights_rated_kw": 0.35},
+    {"id": "609", "name": "Seminar Room 609", "building": "Academic Block", "floor": 6, "capacity": 45, "room_type": "seminar", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 2.0, "lights_rated_kw": 0.4},
+    # Floor 7
+    {"id": "702-A", "name": "Security Lab 702-A", "building": "Academic Block", "floor": 7, "capacity": 30, "room_type": "lab", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.8, "lights_rated_kw": 0.35},
+    {"id": "702-B", "name": "Networks Lab 702-B", "building": "Academic Block", "floor": 7, "capacity": 30, "room_type": "lab", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.8, "lights_rated_kw": 0.35},
+    {"id": "702-C", "name": "Intelligence Lab 702-C", "building": "Academic Block", "floor": 7, "capacity": 30, "room_type": "lab", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.8, "lights_rated_kw": 0.35},
+    {"id": "703", "name": "AISC Advanced Lab 703", "building": "Academic Block", "floor": 7, "capacity": 35, "room_type": "lab", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 2.0, "lights_rated_kw": 0.4},
+    {"id": "703-A", "name": "Cryptography Lab 703-A", "building": "Academic Block", "floor": 7, "capacity": 30, "room_type": "lab", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.8, "lights_rated_kw": 0.35},
+    {"id": "703-B", "name": "Systems Lab 703-B", "building": "Academic Block", "floor": 7, "capacity": 30, "room_type": "lab", "has_camera": False, "has_pir": True, "has_dht": True, "ac_rated_kw": 1.8, "lights_rated_kw": 0.35},
 ]
 
-TIMETABLE_SEED = [
-    # A101 (Camera room)
-    {"classroom_id": "A101", "subject": "Database Management Systems", "faculty": "Dr. Sharma", "day_of_week": 0, "start_time": time(9, 0), "end_time": time(10, 0), "class_type": "lecture"},
-    {"classroom_id": "A101", "subject": "Computer Networks", "faculty": "Prof. Verma", "day_of_week": 0, "start_time": time(10, 0), "end_time": time(11, 0), "class_type": "lecture"},
-    {"classroom_id": "A101", "subject": "Artificial Intelligence", "faculty": "Dr. Rao", "day_of_week": 0, "start_time": time(11, 0), "end_time": time(12, 0), "class_type": "lecture"},
-    {"classroom_id": "A101", "subject": "Database Lab", "faculty": "Dr. Sharma", "day_of_week": 0, "start_time": time(14, 0), "end_time": time(16, 0), "class_type": "lab"},
-    {"classroom_id": "A101", "subject": "Software Engineering", "faculty": "Prof. Nair", "day_of_week": 1, "start_time": time(10, 0), "end_time": time(11, 0), "class_type": "lecture"},
-    {"classroom_id": "A101", "subject": "Operating Systems", "faculty": "Dr. Gupta", "day_of_week": 2, "start_time": time(9, 0), "end_time": time(10, 0), "class_type": "lecture"},
-    
-    # B201
-    {"classroom_id": "B201", "subject": "Design & Analysis of Algorithms", "faculty": "Prof. Kulkarni", "day_of_week": 0, "start_time": time(10, 0), "end_time": time(11, 0), "class_type": "lecture"},
-    {"classroom_id": "B201", "subject": "Theory of Computation", "faculty": "Dr. Patel", "day_of_week": 0, "start_time": time(11, 0), "end_time": time(12, 0), "class_type": "lecture"},
-    
-    # B203
-    {"classroom_id": "B203", "subject": "Computer Networks", "faculty": "Prof. Verma", "day_of_week": 0, "start_time": time(10, 0), "end_time": time(11, 0), "class_type": "lecture"},
-    
-    # C201
-    {"classroom_id": "C201", "subject": "Cloud Computing Seminar", "faculty": "Dr. Sen", "day_of_week": 0, "start_time": time(14, 0), "end_time": time(16, 0), "class_type": "seminar"},
-    
-    # D101
-    {"classroom_id": "D101", "subject": "Applied Mathematics Tutorial", "faculty": "Prof. Iyer", "day_of_week": 0, "start_time": time(9, 0), "end_time": time(10, 0), "class_type": "tutorial"},
-]
+def purge_old_data(db):
+    print("Purging old mock data...")
+    # Delete old timetable entries
+    db.query(TimetableEntry).delete()
+    # Delete old alerts
+    db.query(Alert).delete()
+    # Delete old sensor readings
+    db.query(SensorReading).delete()
+    # Delete old snapshots
+    db.query(OccupancySnapshot).delete()
+    # Delete old classroom states and classrooms
+    db.query(ClassroomState).delete()
+    db.query(Classroom).delete()
+    db.commit()
+    print("  - Cleared old tables cleanly.")
 
 def seed_classrooms(db):
-    print("Seeding classrooms...")
+    print("Seeding authentic SPIT classrooms...")
     for data in CLASSROOMS_SEED:
         existing = db.get(Classroom, data["id"])
         if not existing:
@@ -66,7 +78,7 @@ def seed_classrooms(db):
                 classroom_id=data["id"],
                 occupancy_state="EMPTY",
                 confidence_level="high",
-                reasons=["Classroom provisioned by seed script"],
+                reasons=["Classroom provisioned from SPIT timetable.pdf"],
                 idle_minutes=0,
                 ac_status=False,
                 light_status=False,
@@ -75,26 +87,53 @@ def seed_classrooms(db):
             )
             room.state = state
             db.add(room)
-            print(f"  + Added classroom {data['id']} ({data['building']})")
+            print(f"  + Added classroom {data['id']} ({data['name']})")
         else:
             print(f"  * Classroom {data['id']} already exists")
     db.commit()
 
 def seed_timetable(db):
-    print("Seeding timetable...")
-    for data in TIMETABLE_SEED:
-        existing = db.query(TimetableEntry).filter(
-            TimetableEntry.classroom_id == data["classroom_id"],
-            TimetableEntry.day_of_week == data["day_of_week"],
-            TimetableEntry.start_time == data["start_time"]
-        ).first()
-        if not existing:
-            entry = TimetableEntry(**data)
-            db.add(entry)
-            print(f"  + Added timetable entry: {data['classroom_id']} {data['subject']} {data['start_time']}")
+    print("Extracting and seeding timetable from timetable.pdf...")
+    parsed_entries = extract_timetable()
+    
+    # Consolidate multiple divisions sharing the same room at the same time
+    merged_map = {}
+    for entry in parsed_entries:
+        room_id = entry["room"]
+        # Ensure room is provisioned
+        if not any(c["id"] == room_id for c in CLASSROOMS_SEED):
+            continue
+            
+        sh, sm = map(int, entry["start_time"].split(":"))
+        eh, em = map(int, entry["end_time"].split(":"))
+        key = (room_id, entry["day_of_week"], time(sh, sm))
+        
+        if key not in merged_map:
+            merged_map[key] = {
+                "classroom_id": room_id,
+                "subject": entry["subject"],
+                "faculty": entry["faculty"],
+                "day_of_week": entry["day_of_week"],
+                "start_time": time(sh, sm),
+                "end_time": time(eh, em),
+                "class_type": entry["type"].lower(),
+                "division": entry["division"],
+                "batch": entry["batch"],
+            }
         else:
-            print(f"  * Timetable entry for {data['classroom_id']} at {data['start_time']} exists")
+            existing = merged_map[key]
+            # Merge division
+            if entry["division"] not in existing["division"]:
+                existing["division"] += f", {entry['division']}"
+
+    added = 0
+    for key, data in merged_map.items():
+        entry = TimetableEntry(**data)
+        db.add(entry)
+        added += 1
+
     db.commit()
+    print(f"  + Seeded {added} consolidated timetable sessions from timetable.pdf.")
 
 def seed_settings(db):
     print("Seeding settings preset...")
@@ -112,35 +151,28 @@ def seed_settings(db):
     else:
         print(f"  * System thresholds setting already exists (preset: {setting.preset})")
 
-def purge_seed(db):
-    print("Purging synthetic seed snapshots...")
-    count = db.query(OccupancySnapshot).filter(OccupancySnapshot.data_source == "seed").delete()
-    db.commit()
-    print(f"  - Purged {count} seed snapshot rows.")
-
 def main():
-    parser = argparse.ArgumentParser(description="Seed Smart Classroom database")
-    parser.add_argument("--classrooms", action="store_true", help="Seed ~12 classrooms across 4 blocks")
+    parser = argparse.ArgumentParser(description="Seed Smart Classroom database with SPIT timetable")
+    parser.add_argument("--purge", action="store_true", help="Purge old mock classrooms and data")
+    parser.add_argument("--classrooms", action="store_true", help="Seed authentic classrooms")
     parser.add_argument("--timetable", action="store_true", help="Seed timetable entries")
     parser.add_argument("--settings", action="store_true", help="Seed system settings presets")
-    parser.add_argument("--all", action="store_true", help="Seed classrooms, timetable, and settings")
-    parser.add_argument("--purge-seed", action="store_true", help="Purge synthetic seed data")
+    parser.add_argument("--all", action="store_true", help="Clean purge and seed classrooms, timetable, settings")
 
     args = parser.parse_args()
     db = SessionLocal()
     try:
-        if args.purge_seed:
-            purge_seed(db)
-            return
+        if args.purge or args.all:
+            purge_old_data(db)
 
         if args.all or args.classrooms:
             seed_classrooms(db)
         if args.all or args.timetable:
             seed_timetable(db)
-        if args.all or args.settings or args.classrooms:
+        if args.all or args.settings:
             seed_settings(db)
             
-        print("Database seeding completed successfully.")
+        print("\nDatabase seeding completed successfully.")
     finally:
         db.close()
 

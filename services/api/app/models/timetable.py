@@ -14,6 +14,8 @@ class TimetableEntry(Base):
     start_time: Mapped[time] = mapped_column(Time, nullable=False) # Local IST
     end_time: Mapped[time] = mapped_column(Time, nullable=False)   # Local IST
     class_type: Mapped[str] = mapped_column(String(32), nullable=False, default="lecture") # lecture/lab/tutorial/exam/other
+    division: Mapped[str | None] = mapped_column(String(64), nullable=True) # e.g. 'Division-A', 'Div A+B'
+    batch: Mapped[str | None] = mapped_column(String(32), nullable=True) # e.g. 'Batch 1', 'A1'
     valid_from: Mapped[date | None] = mapped_column(Date, nullable=True)
     valid_to: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))

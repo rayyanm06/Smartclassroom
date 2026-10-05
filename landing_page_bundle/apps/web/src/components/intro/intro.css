@@ -1,0 +1,295 @@
+@import "@fontsource/archivo/latin-800.css";
+@import "@fontsource/archivo/latin-900.css";
+
+.lp-root {
+  /* Scoped engineering tokens (§9) */
+  --lp-paper: #F4F0E6;
+  --lp-ink: #111111;
+  --lp-yellow: #FFD83D;
+  --lp-cyan: #27C7E8;
+  --lp-green: #35C759;
+  --lp-red: #E53935;
+  --lp-blue: #356AE6;
+
+  /* Derived neutrals */
+  --lp-paper-lite: #FBF8F0;
+  --lp-paper-shade: #E6E0D0;
+  --lp-metal: #CFCABC;
+  --lp-pcb: #26262B;
+  --lp-grid: rgba(17, 17, 17, 0.05);
+  --lp-grain: rgba(17, 17, 17, 0.04);
+  --lp-shadow-hard: 8px 8px 0 var(--lp-ink);
+
+  /* Typography sizes */
+  --lp-display-xl: clamp(64px, 13vw, 220px);
+  --lp-display-l: clamp(44px, 8vw, 140px);
+
+  position: relative;
+  width: 100%;
+  background-color: var(--lp-paper);
+  color: var(--lp-ink);
+  font-family: 'IBM Plex Mono', monospace;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Stage container */
+.lp-stage {
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* SVG World viewport */
+.lp-world-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 10;
+}
+
+/* Background layers */
+.lp-bg-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.lp-bg-paper {
+  background-color: var(--lp-paper);
+  z-index: 1;
+}
+
+/* Technical Grid */
+.lp-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background-size: 48px 48px;
+  background-image:
+    linear-gradient(to right, var(--lp-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--lp-grid) 1px, transparent 1px);
+  pointer-events: none;
+}
+
+.lp-bg-red {
+  background-color: var(--lp-red);
+  z-index: 3;
+  opacity: 0;
+}
+
+.lp-bg-dark {
+  background-color: #111111;
+  z-index: 4;
+  opacity: 0;
+}
+
+/* Engineering grain */
+.lp-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  opacity: 0.45;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+}
+
+/* Registration marks */
+.lp-reg-mark {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+  z-index: 16;
+}
+
+.lp-reg-tl { top: 32px; left: 32px; }
+.lp-reg-tr { top: 32px; right: 32px; }
+.lp-reg-bl { bottom: 32px; left: 32px; }
+.lp-reg-br { bottom: 32px; right: 32px; }
+
+/* Big display headings */
+.lp-display-font {
+  font-family: 'Archivo', sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 0.86;
+  letter-spacing: -0.02em;
+}
+
+/* Neo-brutalist CTA Button (§6 Scene 14) */
+.lp-cta-button {
+  background-color: var(--lp-yellow);
+  color: var(--lp-ink);
+  border: 4px solid var(--lp-ink);
+  border-radius: 0;
+  box-shadow: 8px 8px 0 var(--lp-ink);
+  font-family: 'Archivo', sans-serif;
+  font-weight: 900;
+  font-size: clamp(20px, 2.5vw, 28px);
+  letter-spacing: 0.04em;
+  padding: 20px 36px;
+  min-height: 64px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+.lp-cta-button:hover {
+  transform: translate(4px, 4px);
+  box-shadow: 4px 4px 0 var(--lp-ink);
+  background-color: #ffe169;
+}
+
+.lp-cta-button:active {
+  transform: translate(8px, 8px);
+  box-shadow: 0 0 0 var(--lp-ink);
+}
+
+.lp-cta-button:focus-visible {
+  outline: 3px solid var(--lp-ink);
+  outline-offset: 4px;
+}
+
+/* Skip Intro Link */
+.lp-skip-link {
+  position: absolute;
+  top: 18px;
+  right: 24px;
+  z-index: 100;
+  background-color: var(--lp-paper);
+  border: 2px solid var(--lp-ink);
+  box-shadow: 3px 3px 0 var(--lp-ink);
+  color: var(--lp-ink);
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 8px 14px;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: transform 100ms ease, box-shadow 100ms ease;
+}
+
+.lp-skip-link:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--lp-ink);
+  background-color: var(--lp-yellow);
+}
+
+.lp-skip-link:focus-visible {
+  outline: 3px solid var(--lp-ink);
+  outline-offset: 3px;
+}
+
+/* HUD Header Plate */
+.lp-hud-plate {
+  position: absolute;
+  top: 18px;
+  left: 24px;
+  z-index: 90;
+  background-color: var(--lp-paper);
+  border: 2px solid var(--lp-ink);
+  box-shadow: 3px 3px 0 var(--lp-ink);
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.lp-hud-dot {
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--lp-ink);
+  flex-shrink: 0;
+}
+
+/* Honesty Strip Plate */
+.lp-honesty-plate {
+  position: absolute;
+  bottom: 20px;
+  left: 24px;
+  z-index: 90;
+  background-color: var(--lp-ink);
+  color: var(--lp-paper);
+  border: 2px solid var(--lp-ink);
+  padding: 6px 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Scene Progress Ticks */
+.lp-progress-nav {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lp-tick-btn {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--lp-ink);
+  background-color: var(--lp-paper);
+  padding: 0;
+  cursor: pointer;
+  transition: transform 120ms ease, background-color 120ms ease;
+}
+
+.lp-tick-btn:hover {
+  transform: scale(1.3);
+  background-color: var(--lp-yellow);
+}
+
+.lp-tick-btn.active {
+  background-color: var(--lp-ink);
+}
+
+/* Scroll Hint Loop (Stops when p > 0.5) */
+@keyframes lp-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+.lp-scroll-hint-bob {
+  animation: lp-bob 1.5s ease-in-out infinite;
+}
+
+/* Fullscreen Curtain Transition (§17) */
+.lp-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  background-color: var(--lp-paper);
+  border: 6px solid var(--lp-ink);
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+/* Body state locks */
+html.lp-leaving {
+  overflow: hidden !important;
+  pointer-events: none !important;
+}

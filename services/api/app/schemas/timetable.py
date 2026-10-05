@@ -10,6 +10,8 @@ class TimetableEntryBase(BaseModel):
     start_time: time
     end_time: time
     class_type: str = "lecture" # lecture/lab/tutorial/exam/other
+    division: Optional[str] = None
+    batch: Optional[str] = None
     valid_from: Optional[date] = None
     valid_to: Optional[date] = None
 
@@ -23,6 +25,8 @@ class TimetableEntryUpdate(BaseModel):
     start_time: Optional[time] = None
     end_time: Optional[time] = None
     class_type: Optional[str] = None
+    division: Optional[str] = None
+    batch: Optional[str] = None
     valid_from: Optional[date] = None
     valid_to: Optional[date] = None
 

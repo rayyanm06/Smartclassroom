@@ -54,8 +54,8 @@ def test_sensor_ingest_validation():
 
 def test_sensor_ingest_simulation_success():
     payload = {
-        "classroom_id": "A101",
-        "device_id": "esp32-a101",
+        "classroom_id": "508",
+        "device_id": "esp32-508",
         "pir_motion": True,
         "event": "motion",
         "temperature": 28.0,
@@ -76,8 +76,8 @@ def test_sensor_ingest_esp32_accepted_identically():
     Proves the API accepts payload with source='esp32' identically to source='simulation'.
     """
     payload_esp32 = {
-        "classroom_id": "A101",
-        "device_id": "esp32-a101-hardware",
+        "classroom_id": "508",
+        "device_id": "esp32-508-hardware",
         "pir_motion": True,
         "event": "motion",
         "temperature": 28.0,
@@ -96,7 +96,7 @@ def test_command_polling_and_ack():
     # Insert a pending command
     db = SessionLocal()
     cmd = DeviceCommand(
-        classroom_id="A101",
+        classroom_id="508",
         device="ac",
         command="off",
         status="pending",
@@ -110,7 +110,7 @@ def test_command_polling_and_ack():
     try:
         # Poll pending commands
         poll_res = client.get(
-            "/api/classrooms/A101/commands/pending",
+            "/api/classrooms/508/commands/pending",
             headers=VALID_HEADERS
         )
         assert poll_res.status_code == 200

@@ -11,6 +11,7 @@ from app.models.sensor import SensorReading
 from app.models.command import DeviceCommand
 from app.schemas.ingest import (
     SensorEventSchema,
+    CameraEventSchema,
     PendingCommandResponse,
     AckResponse,
 )
@@ -72,8 +73,48 @@ def ingest_sensor_data(payload: SensorEventSchema, db: Session = Depends(get_db)
             state.last_presence_at = received_now
             state.idle_minutes = 0
 
+        # Run occupancy intelligence and energy alert evaluation (§8, §9)
+        from app.engine.occupancy import evaluate_classroom_occupancy
+        evaluate_classroom_occupancy(classroom, db)
+
     db.commit()
     return {"accepted": True}
+
+@router.post(
+    "/camera-data",
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(verify_device_key)]
+)
+def ingest_camera_data(payload: CameraEventSchema, db: Session = Depends(get_db)):
+    """
+    Ingests live optical person count telemetry from vision service (Phase 8).
+    Protected by X-Device-Key header.
+    """
+    classroom = db.get(Classroom, payload.classroom_id)
+    if not classroom:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Classroom '{payload.classroom_id}' is not provisioned."
+        )
+
+    received_now = system_clock.now_utc()
+    if classroom.state:
+        state = classroom.state
+        state.last_camera_at = received_now
+        state.last_camera_count = payload.people_detected
+        state.people_count = payload.people_detected
+        state.camera_online = True
+
+        from app.engine.occupancy import evaluate_classroom_occupancy
+        evaluate_classroom_occupancy(classroom, db)
+
+    db.commit()
+    return {
+        "accepted": True,
+        "classroom_id": payload.classroom_id,
+        "people_detected": payload.people_detected,
+        "occupancy_state": classroom.state.occupancy_state if classroom.state else None,
+    }
 
 @router.get(
     "/classrooms/{classroom_id}/commands/pending",
