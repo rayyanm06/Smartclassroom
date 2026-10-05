@@ -7,6 +7,7 @@ from app.core.clock import system_clock, TZ_IST
 from app.models.classroom import Classroom, ClassroomState
 from app.models.timetable import TimetableEntry
 from app.models.alert import Alert
+from app.models.snapshot import OccupancySnapshot
 from app.engine.schedule import is_expected, get_active_entry
 
 def trigger_or_update_alert(
@@ -217,3 +218,38 @@ def evaluate_classroom_occupancy(classroom: Classroom, db: Session):
         # If room is occupied, resolve energy idle alerts
         resolve_alert_if_open(db, classroom.id, "ENERGY_AC_IDLE")
         resolve_alert_if_open(db, classroom.id, "ENERGY_LIGHTS_IDLE")
+
+    # 5. Persist periodic occupancy snapshot
+    last_snap = db.scalar(
+        select(OccupancySnapshot)
+        .where(OccupancySnapshot.classroom_id == classroom.id)
+        .order_by(OccupancySnapshot.ts.desc())
+        .limit(1)
+    )
+    should_snapshot = False
+    if not last_snap:
+        should_snapshot = True
+    else:
+        last_ts = last_snap.ts.replace(tzinfo=timezone.utc) if last_snap.ts.tzinfo is None else last_snap.ts
+        time_diff = (now_utc - last_ts).total_seconds()
+        if time_diff >= 60.0 or last_snap.occupancy_state != state.occupancy_state:
+            should_snapshot = True
+
+    if should_snapshot:
+        snap = OccupancySnapshot(
+            classroom_id=classroom.id,
+            ts=now_utc,
+            occupancy_state=state.occupancy_state,
+            people_count=state.people_count,
+            expected_occupancy=state.expected_occupancy,
+            pir_active=recent_motion,
+            temperature=state.temperature,
+            humidity=state.humidity,
+            ac_on=state.ac_status,
+            light_on=state.light_status,
+            idle_minutes=state.idle_minutes,
+            data_source="live",
+        )
+        db.add(snap)
+
+

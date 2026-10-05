@@ -19,9 +19,46 @@ from app.schemas.classroom import (
 )
 from app.engine.schedule import get_active_entry, get_next_entry
 
+from app.models.command import DeviceCommand
+from app.schemas.ingest import DeviceActionSchema
 from app.engine.occupancy import evaluate_classroom_occupancy
 
 router = APIRouter(prefix="/api/classrooms", tags=["classrooms"])
+
+
+@router.post("/{classroom_id}/actions")
+def dispatch_classroom_action(
+    classroom_id: str,
+    action: DeviceActionSchema,
+    db: Session = Depends(get_db)
+):
+    """Dispatches a remote appliance command override (AC/lights) to the device command queue."""
+    classroom = db.get(Classroom, classroom_id)
+    if not classroom:
+        raise HTTPException(status_code=404, detail=f"Classroom '{classroom_id}' not found.")
+
+    now_utc = system_clock.now_utc()
+    command = DeviceCommand(
+        classroom_id=classroom_id,
+        device=action.device,
+        command=action.command,
+        status="pending",
+        created_at=now_utc,
+    )
+    db.add(command)
+    db.flush()
+
+    if classroom.state:
+        if action.device == "ac":
+            classroom.state.ac_status = (action.command.lower() == "on")
+        elif action.device == "light":
+            classroom.state.light_status = (action.command.lower() == "on")
+        evaluate_classroom_occupancy(classroom, db)
+
+    db.commit()
+    db.refresh(command)
+    return {"command_id": command.id, "status": "pending"}
+
 
 @router.get("", response_model=List[ClassroomWithStateResponse])
 def list_classrooms(db: Session = Depends(get_db)):

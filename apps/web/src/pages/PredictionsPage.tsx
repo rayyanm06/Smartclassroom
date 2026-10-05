@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '../services/api';
+import { api, API_BASE } from '../services/api';
 import { Info, Sparkles, CheckCircle2, User } from 'lucide-react';
 
 const DAYS = [
@@ -29,7 +29,7 @@ export const PredictionsPage: React.FC = () => {
     queryKey: ['occupancy-prediction', activeRoomId, selectedDay, selectedHour],
     queryFn: async () => {
       const res = await fetch(
-        `http://localhost:8000/api/predictions/occupancy?classroom_id=${activeRoomId}&day_of_week=${selectedDay}&hour=${selectedHour}`
+        `${API_BASE}/api/predictions/occupancy?classroom_id=${activeRoomId}&day_of_week=${selectedDay}&hour=${selectedHour}`
       );
       if (!res.ok) return null;
       return res.json();

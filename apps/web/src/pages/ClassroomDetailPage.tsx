@@ -180,7 +180,7 @@ export const ClassroomDetailPage: React.FC = () => {
             </div>
             <h3 className="font-heading font-black text-sm uppercase">NO CAMERA INSTALLED</h3>
             <p className="text-xs text-neutral-600 font-mono max-w-sm">
-              Per Locked Decision <strong>D4</strong>, only classroom A101 utilizes optical surveillance.
+              Optical surveillance is deployed on designated pilot classrooms (e.g. 508 / 002).
               Occupancy in this room is derived strictly from PIR motion sensor and the timetable.
             </p>
           </div>

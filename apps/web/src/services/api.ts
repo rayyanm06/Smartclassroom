@@ -5,6 +5,10 @@ import type {
   OccupancyCurvePoint,
   BlockAvgTemp,
   TimetableEntry,
+  EnergyRecommendationsResponse,
+  AnalyticsKpis,
+  UnderutilizedRoom,
+  SettingsResponse,
 } from '../types';
 import {
   MOCK_CLASSROOMS,
@@ -15,7 +19,7 @@ import {
 } from './mocks/data';
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export interface ApiClient {
   getSummary(): Promise<DashboardSummary>;
@@ -31,7 +35,14 @@ export interface ApiClient {
     action: { device: 'ac' | 'light'; command: 'on' | 'off' }
   ): Promise<{ command_id: number; status: string }>;
   getTimetable(classroomId?: string): Promise<TimetableEntry[]>;
+  getEnergyRecommendations(): Promise<EnergyRecommendationsResponse>;
+  getSettings(): Promise<SettingsResponse>;
+  updateSettings(payload: { preset?: string; values?: Record<string, number> }): Promise<SettingsResponse>;
+  switchPreset(name: string): Promise<SettingsResponse>;
+  getAnalyticsKpis(): Promise<AnalyticsKpis>;
+  getUnderutilizedRooms(): Promise<UnderutilizedRoom[]>;
 }
+
 
 // In-memory mock adapter state
 let mockClassrooms = [...MOCK_CLASSROOMS];
@@ -108,6 +119,62 @@ const MockAdapter: ApiClient = {
   },
 
   async getTimetable(_classroomId?: string): Promise<TimetableEntry[]> {
+    return Promise.resolve([]);
+  },
+
+  async getEnergyRecommendations(): Promise<EnergyRecommendationsResponse> {
+    return Promise.resolve({ total_waste_kwh: 1.8, count: 1, recommendations: [] });
+  },
+
+  async getSettings(): Promise<SettingsResponse> {
+    return Promise.resolve({
+      preset: 'demo',
+      values: {
+        camera_fresh_sec: 15,
+        sensor_fresh_sec: 30,
+        idle_alert_min: 1,
+        anomaly_alert_min: 2,
+      },
+    });
+  },
+
+  async updateSettings(payload: { preset?: string; values?: Record<string, number> }): Promise<SettingsResponse> {
+    return Promise.resolve({
+      preset: payload.preset || 'demo',
+      values: {
+        camera_fresh_sec: 15,
+        sensor_fresh_sec: 30,
+        idle_alert_min: 1,
+        anomaly_alert_min: 2,
+        ...payload.values,
+      },
+    });
+  },
+
+  async switchPreset(name: string): Promise<SettingsResponse> {
+    return Promise.resolve({
+      preset: name,
+      values: {
+        camera_fresh_sec: 15,
+        sensor_fresh_sec: 30,
+        idle_alert_min: name === 'demo' ? 1 : 15,
+        anomaly_alert_min: name === 'demo' ? 2 : 15,
+      },
+    });
+  },
+
+  async getAnalyticsKpis(): Promise<AnalyticsKpis> {
+    return Promise.resolve({
+      campus_utilization_pct: 64.2,
+      schedule_adherence_pct: 88.5,
+      peak_utilization_hour: '11:00 - 12:00',
+      total_scheduled_sessions: 115,
+      active_occupied_rooms: 4,
+      total_classrooms: 23,
+    });
+  },
+
+  async getUnderutilizedRooms(): Promise<UnderutilizedRoom[]> {
     return Promise.resolve([]);
   },
 };
@@ -187,6 +254,49 @@ const HttpAdapter: ApiClient = {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   },
+
+  async getEnergyRecommendations(): Promise<EnergyRecommendationsResponse> {
+    const res = await fetch(`${API_BASE}/api/dashboard/energy-recommendations`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+
+  async getSettings(): Promise<SettingsResponse> {
+    const res = await fetch(`${API_BASE}/api/settings`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+
+  async updateSettings(payload: { preset?: string; values?: Record<string, number> }): Promise<SettingsResponse> {
+    const res = await fetch(`${API_BASE}/api/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+
+  async switchPreset(name: string): Promise<SettingsResponse> {
+    const res = await fetch(`${API_BASE}/api/settings/preset/${name}`, {
+      method: 'POST',
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+
+  async getAnalyticsKpis(): Promise<AnalyticsKpis> {
+    const res = await fetch(`${API_BASE}/api/analytics/kpis`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+
+  async getUnderutilizedRooms(): Promise<UnderutilizedRoom[]> {
+    const res = await fetch(`${API_BASE}/api/analytics/underutilized`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
 };
 
 export const api: ApiClient = USE_MOCKS ? MockAdapter : HttpAdapter;
+

@@ -115,3 +115,56 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
         "camera_feeds_active": f"{camera_online} / {camera_installed}",
         "sensors_online": f"{sensor_online} / {sensor_installed}",
     }
+
+@router.get("/energy-recommendations")
+def get_energy_recommendations(db: Session = Depends(get_db)):
+    """Computes actionable energy saving recommendations from real empty classrooms with active appliances."""
+    classrooms = db.scalars(select(Classroom)).all()
+    recommendations = []
+    total_waste_kwh = 0.0
+
+    for c in classrooms:
+        state = c.state
+        if not state:
+            continue
+        if state.occupancy_state in ["EMPTY", "OCCUPANCY_ANOMALY"] and (state.ac_status or state.light_status):
+            ac_waste = (c.ac_rated_kw * (max(state.idle_minutes, 1) / 60.0)) if state.ac_status else 0.0
+            lt_waste = (c.lights_rated_kw * (max(state.idle_minutes, 1) / 60.0)) if state.light_status else 0.0
+            room_waste = round(ac_waste + lt_waste, 2)
+            total_waste_kwh += room_waste
+
+            actions = []
+            if state.ac_status:
+                actions.append({"device": "ac", "command": "off"})
+            if state.light_status:
+                actions.append({"device": "light", "command": "off"})
+
+            headline = (
+                f"AC & Lights active in empty {c.id}"
+                if state.ac_status and state.light_status
+                else f"AC active in empty {c.id}"
+                if state.ac_status
+                else f"Lights active in empty {c.id}"
+            )
+
+            recommendations.append({
+                "classroom_id": c.id,
+                "building": c.building,
+                "floor": c.floor,
+                "headline": headline,
+                "context": f"Room {c.id} ({c.name}) appears unoccupied. Idle: {state.idle_minutes} min. Rated power: {c.ac_rated_kw} kW AC, {c.lights_rated_kw} kW Lights.",
+                "idle_minutes": state.idle_minutes,
+                "severity": "critical" if state.ac_status else "warning",
+                "actions": actions,
+                "estimated_waste_kwh": room_waste,
+                "ac_status": state.ac_status,
+                "light_status": state.light_status,
+            })
+
+    recommendations.sort(key=lambda x: x["estimated_waste_kwh"], reverse=True)
+    return {
+        "total_waste_kwh": round(total_waste_kwh, 2),
+        "count": len(recommendations),
+        "recommendations": recommendations,
+    }
+

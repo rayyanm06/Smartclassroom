@@ -7,6 +7,7 @@ import { Search } from 'lucide-react';
 export const ClassroomsPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [selectedBlock, setSelectedBlock] = useState('all');
+  const [selectedFloor, setSelectedFloor] = useState('all');
 
   const { data: classrooms = [], isLoading } = useQuery({
     queryKey: ['classrooms-list'],
@@ -20,10 +21,12 @@ export const ClassroomsPage: React.FC = () => {
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.building.toLowerCase().includes(search.toLowerCase());
     const matchesBlock = selectedBlock === 'all' || c.building === selectedBlock;
-    return matchesSearch && matchesBlock;
+    const matchesFloor = selectedFloor === 'all' || c.floor.toString() === selectedFloor;
+    return matchesSearch && matchesBlock && matchesFloor;
   });
 
   const blocks = Array.from(new Set(classrooms.map((c) => c.building))).sort();
+  const floors = Array.from(new Set(classrooms.map((c) => c.floor))).sort((a, b) => a - b);
 
   return (
     <div className="space-y-6">
@@ -56,7 +59,7 @@ export const ClassroomsPage: React.FC = () => {
           />
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
           <button
             onClick={() => setSelectedBlock('all')}
             className={`px-3 py-1.5 text-xs font-mono font-bold border-2 ${
@@ -76,6 +79,19 @@ export const ClassroomsPage: React.FC = () => {
               {blk.toUpperCase()}
             </button>
           ))}
+          <span className="text-neutral-300 mx-1">|</span>
+          <select
+            value={selectedFloor}
+            onChange={(e) => setSelectedFloor(e.target.value)}
+            className="px-2.5 py-1.5 text-xs font-mono font-bold border-2 border-ink bg-white"
+          >
+            <option value="all">ALL FLOORS</option>
+            {floors.map((f) => (
+              <option key={f} value={f.toString()}>
+                FLOOR {f}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 

@@ -139,3 +139,36 @@ def test_settings_presets():
     assert res_demo.status_code == 200
     assert res_demo.json()["preset"] == "demo"
     assert res_demo.json()["values"]["idle_alert_min"] == 1
+
+def test_dispatch_appliance_action():
+    # Dispatch AC OFF command for room 508
+    res = client.post("/api/classrooms/508/actions", json={"device": "ac", "command": "off"})
+    assert res.status_code == 200
+    data = res.json()
+    assert "command_id" in data
+    assert data["status"] == "pending"
+
+    # Verify pending commands queue returns the command
+    pending_res = client.get("/api/classrooms/508/commands/pending", headers={"X-Device-Key": "dev-secret-device-key-2026"})
+    assert pending_res.status_code == 200
+    pending_list = pending_res.json()
+    assert any(cmd["id"] == data["command_id"] for cmd in pending_list)
+
+def test_energy_recommendations_and_analytics_kpis():
+    rec_res = client.get("/api/dashboard/energy-recommendations")
+    assert rec_res.status_code == 200
+    rec_data = rec_res.json()
+    assert "total_waste_kwh" in rec_data
+    assert "recommendations" in rec_data
+
+    kpi_res = client.get("/api/analytics/kpis")
+    assert kpi_res.status_code == 200
+    kpi_data = kpi_res.json()
+    assert "campus_utilization_pct" in kpi_data
+    assert "schedule_adherence_pct" in kpi_data
+    assert "peak_utilization_hour" in kpi_data
+
+    under_res = client.get("/api/analytics/underutilized")
+    assert under_res.status_code == 200
+    assert isinstance(under_res.json(), list)
+

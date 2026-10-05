@@ -111,13 +111,54 @@ export interface DashboardSummary {
 
 export interface EnergyRecommendation {
   classroom_id: string;
+  building?: string;
+  floor?: number;
   headline: string;
   context: string;
   idle_minutes: number;
   severity: AlertSeverity;
   actions: Array<{ device: 'ac' | 'light'; command: 'on' | 'off' }>;
   estimated_waste_kwh: number;
-  estimate_note: string;
+  ac_status?: boolean;
+  light_status?: boolean;
+}
+
+export interface EnergyRecommendationsResponse {
+  total_waste_kwh: number;
+  count: number;
+  recommendations: EnergyRecommendation[];
+}
+
+export interface AnalyticsKpis {
+  campus_utilization_pct: number;
+  schedule_adherence_pct: number;
+  peak_utilization_hour: string;
+  total_scheduled_sessions: number;
+  active_occupied_rooms: number;
+  total_classrooms: number;
+}
+
+export interface UnderutilizedRoom {
+  id: string;
+  name: string;
+  floor: number;
+  capacity: number;
+  room_type: string;
+  scheduled_weekly_hours: number;
+  weekly_utilization_pct: number;
+  current_state: string;
+  recommendation: string;
+}
+
+export interface SettingsResponse {
+  preset: 'demo' | 'production' | string;
+  values: {
+    camera_fresh_sec: number;
+    sensor_fresh_sec: number;
+    idle_alert_min: number;
+    anomaly_alert_min: number;
+    [key: string]: number;
+  };
 }
 
 export interface OccupancyCurvePoint {
@@ -130,3 +171,4 @@ export interface BlockAvgTemp {
   block: string;
   temp: number;
 }
+

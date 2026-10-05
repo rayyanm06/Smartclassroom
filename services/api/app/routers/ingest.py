@@ -9,6 +9,7 @@ from app.core.clock import system_clock
 from app.models.classroom import Classroom, ClassroomState
 from app.models.sensor import SensorReading
 from app.models.command import DeviceCommand
+from app.models.camera import CameraDetection
 from app.schemas.ingest import (
     SensorEventSchema,
     CameraEventSchema,
@@ -98,6 +99,20 @@ def ingest_camera_data(payload: CameraEventSchema, db: Session = Depends(get_db)
         )
 
     received_now = system_clock.now_utc()
+    dev_ts = payload.timestamp if payload.timestamp else received_now
+
+    # Persist camera detection telemetry event
+    detection = CameraDetection(
+        classroom_id=payload.classroom_id,
+        camera_id=payload.camera_id,
+        people_detected=payload.people_detected,
+        confidence=payload.confidence,
+        source=payload.source,
+        device_timestamp=dev_ts,
+        received_at=received_now,
+    )
+    db.add(detection)
+
     if classroom.state:
         state = classroom.state
         state.last_camera_at = received_now
