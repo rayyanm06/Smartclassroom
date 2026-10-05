@@ -12,7 +12,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
   streamUrl,
 }) => {
   const [streamError, setStreamError] = useState(false);
-  const activeStreamUrl = streamUrl || `http://localhost:8001/stream/${classroom?.id || '508'}.mjpg`;
+  const activeStreamUrl = streamUrl || `/stream/${classroom?.id || '508'}.mjpg`;
 
   return (
     <div className="neo-card p-4 space-y-3 bg-white">

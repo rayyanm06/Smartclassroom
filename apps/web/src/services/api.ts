@@ -19,7 +19,7 @@ import {
 } from './mocks/data';
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
-export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+export const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export interface ApiClient {
   getSummary(): Promise<DashboardSummary>;

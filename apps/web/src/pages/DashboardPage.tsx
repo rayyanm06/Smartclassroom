@@ -192,7 +192,7 @@ export const DashboardPage: React.FC = () => {
           {cameraClassroom && (
             <CameraPanel
               classroom={cameraClassroom}
-              streamUrl={`http://localhost:8001/stream/${cameraClassroom.id}.mjpg`}
+              streamUrl={`/stream/${cameraClassroom.id}.mjpg`}
             />
           )}
         </div>

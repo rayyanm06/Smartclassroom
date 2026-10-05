@@ -13,7 +13,7 @@ export const CameraPage: React.FC = () => {
     refetchInterval: 3000,
   });
 
-  const streamUrl = `http://localhost:8001/stream/${roomId}.mjpg`;
+  const streamUrl = `/stream/${roomId}.mjpg`;
 
   return (
     <div className="space-y-6">
