@@ -15,7 +15,7 @@ class SimulatorDaemon:
         with open(config_path, "r") as f:
             self.config = yaml.safe_load(f)
 
-        self.api_url = self.config.get("api_url", "http://localhost:8000")
+        self.api_url = os.getenv("API_URL", self.config.get("api_url", "http://localhost:8080"))
         self.device_key = self.config.get("device_key", "dev-secret-device-key-2026")
         self.tick_interval = self.config.get("tick_interval_sec", 1.0)
         self.heartbeat_interval = self.config.get("heartbeat_interval_sec", 10.0)

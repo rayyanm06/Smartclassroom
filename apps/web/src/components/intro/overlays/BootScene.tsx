@@ -10,7 +10,7 @@ const BOOT_LINES = [
   { text: '[OK] DUAL RELAY CHANNELS   : 2x 10A SWITCHING MATRIX READY', color: 'text-amber-400', p: [92.4, 92.8] as const },
   { text: '[OK] RTSP INGEST PIPELINE  : 172.20.10.1:554/stream ONLINE', color: 'text-emerald-400', p: [92.8, 93.2] as const },
   { text: '[OK] YOLO11n NEURAL ENGINE : ONNX / OPENCV ACCELERATOR LOADED', color: 'text-emerald-400', p: [93.2, 93.6] as const },
-  { text: '[OK] FASTAPI / MYSQL HOST  : PORT 8000 & 3306 OPERATIONAL', color: 'text-emerald-400', p: [93.6, 94.0] as const },
+  { text: '[OK] FASTAPI / MYSQL HOST  : PORT 8080 & 3306 OPERATIONAL', color: 'text-emerald-400', p: [93.6, 94.0] as const },
   { text: '>>> ALL SUBSYSTEMS NOMINAL · PLATFORM READY FOR HANDOFF', color: 'text-[var(--lp-yellow)] font-black', p: [94.0, 94.5] as const },
 ];
 

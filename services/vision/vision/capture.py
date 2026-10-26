@@ -1,3 +1,5 @@
+import os
+os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp"
 import cv2
 import time
 import threading
@@ -53,7 +55,7 @@ class VideoCaptureSource(FrameSource):
                 cap = cv2.VideoCapture(
                     self.source,
                     cv2.CAP_FFMPEG,
-                    [cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 3000, cv2.CAP_PROP_READ_TIMEOUT_MSEC, 3000]
+                    [cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 5000, cv2.CAP_PROP_READ_TIMEOUT_MSEC, 5000]
                 )
             else:
                 cap = cv2.VideoCapture(self.source)

@@ -79,6 +79,6 @@ Once your phone is streaming:
    cd services/vision
    python -m vision.main
    ```
-2. Open `http://localhost:8001/stream/508.mjpg` (or `http://localhost:8001/stream`) or the dashboard Camera Feed page.
+2. Open `http://localhost:8081/stream/508.mjpg` (or `http://localhost:8081/stream`) or the dashboard Camera Feed page.
 3. Confirm live video latency is **< 1.0 second**.
 

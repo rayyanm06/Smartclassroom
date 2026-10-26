@@ -46,15 +46,6 @@ def dispatch_classroom_action(
         created_at=now_utc,
     )
     db.add(command)
-    db.flush()
-
-    if classroom.state:
-        if action.device == "ac":
-            classroom.state.ac_status = (action.command.lower() == "on")
-        elif action.device == "light":
-            classroom.state.light_status = (action.command.lower() == "on")
-        evaluate_classroom_occupancy(classroom, db)
-
     db.commit()
     db.refresh(command)
     return {"command_id": command.id, "status": "pending"}
@@ -101,10 +92,13 @@ def create_classroom(payload: ClassroomCreate, db: Session = Depends(get_db)):
 
 @router.get("/{classroom_id}", response_model=dict)
 def get_classroom_detail(classroom_id: str, db: Session = Depends(get_db)):
-    """Returns detailed room status: state + active & next timetable entry + open alerts (§7.2)."""
+    """Returns detailed room status: state + active & next timetable entry + open alerts + recent commands (§7.2)."""
     classroom = db.get(Classroom, classroom_id)
     if not classroom:
         raise HTTPException(status_code=404, detail=f"Classroom '{classroom_id}' not found.")
+
+    evaluate_classroom_occupancy(classroom, db)
+    db.commit()
 
     now_ist = system_clock.now_ist()
     entries = classroom.timetable_entries
@@ -115,6 +109,15 @@ def get_classroom_detail(classroom_id: str, db: Session = Depends(get_db)):
     # Fetch open alerts for this room
     alerts_stmt = select(Alert).where(Alert.classroom_id == classroom_id, Alert.status != "resolved")
     open_alerts = db.scalars(alerts_stmt).all()
+
+    # Fetch recent commands for this room (last 5)
+    cmds_stmt = (
+        select(DeviceCommand)
+        .where(DeviceCommand.classroom_id == classroom_id)
+        .order_by(DeviceCommand.created_at.desc())
+        .limit(5)
+    )
+    recent_commands = db.scalars(cmds_stmt).all()
 
     return {
         "classroom": ClassroomResponse.model_validate(classroom).model_dump(),
@@ -144,7 +147,17 @@ def get_classroom_detail(classroom_id: str, db: Session = Depends(get_db)):
                 "detail": a.detail,
                 "status": a.status,
             } for a in open_alerts
-        ]
+        ],
+        "recent_commands": [
+            {
+                "id": c.id,
+                "device": c.device,
+                "command": c.command,
+                "status": c.status,
+                "created_at": c.created_at.isoformat(),
+                "acked_at": c.acked_at.isoformat() if c.acked_at else None,
+            } for c in recent_commands
+        ],
     }
 
 @router.put("/{classroom_id}", response_model=ClassroomResponse)
@@ -218,13 +231,15 @@ def update_camera_telemetry(
 
     state = classroom.state
     if state:
-        now_utc = system_clock.now_utc()
-        state.last_camera_at = now_utc
-        state.camera_online = payload.get("online", True)
-        if "people_count" in payload:
-            state.people_count = payload["people_count"]
-            state.last_camera_count = payload["people_count"]
-        
+        is_online = payload.get("online", True)
+        state.camera_online = is_online
+        if is_online:
+            now_utc = system_clock.now_utc()
+            state.last_camera_at = now_utc
+            if "people_count" in payload:
+                state.people_count = payload["people_count"]
+                state.last_camera_count = payload["people_count"]
+
         evaluate_classroom_occupancy(classroom, db)
         db.commit()
 

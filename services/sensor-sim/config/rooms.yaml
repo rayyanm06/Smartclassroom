@@ -1,4 +1,4 @@
-api_url: "http://localhost:8000"
+api_url: "http://localhost:8080"
 device_key: "dev-secret-device-key-2026"
 heartbeat_interval_sec: 10
 tick_interval_sec: 1.0

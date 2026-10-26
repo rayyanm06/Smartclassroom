@@ -24,7 +24,7 @@ class YoloPersonDetector:
         model_name: str = "yolo11n.pt",
         conf: float = 0.35,
         imgsz: int = 640,
-        api_url: str = "http://localhost:8000",
+        api_url: str = "http://localhost:8080",
         device_key: str = "dev-secret-device-key-2026",
         window_size: int = 5,
         report_interval_sec: float = 2.0,
@@ -203,6 +203,20 @@ class YoloPersonDetector:
 
         while self._running:
             time.sleep(self.report_interval)
+
+            is_connected = bool(self.source and self.source.is_connected())
+            if not is_connected:
+                # Camera is disconnected/offline; inform backend without fabricating 0 count
+                try:
+                    client.post(
+                        f"{self.api_url}/api/classrooms/{self.classroom_id}/camera-telemetry",
+                        json={"online": False},
+                        headers=headers,
+                    )
+                except Exception:
+                    pass
+                continue
+
             with self._lock:
                 count = self.smoothed_count
                 status = self.occupancy_status

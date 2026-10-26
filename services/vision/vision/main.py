@@ -1,3 +1,4 @@
+import os
 import sys
 import yaml
 import uvicorn
@@ -21,6 +22,9 @@ def main():
     with open(CONFIG_PATH, "r") as f:
         config = yaml.safe_load(f)
 
+    api_url = os.getenv("API_URL", "http://localhost:8080")
+    device_key = os.getenv("DEVICE_KEY", "dev-secret-device-key-2026")
+
     for cam in config.get("cameras", []):
         room_id = str(cam["classroom_id"])
         source_val = cam["source"]
@@ -42,12 +46,14 @@ def main():
             model_name=model_name,
             conf=conf,
             imgsz=imgsz,
+            api_url=api_url,
+            device_key=device_key,
         )
         detector.start(source=src)
         server.camera_detectors[room_id] = detector
 
     print(f"[Vision] Initialized {len(server.camera_sources)} camera stream sources and {len(server.camera_detectors)} detectors.")
-    uvicorn.run(server.app, host="0.0.0.0", port=8001, log_level="info")
+    uvicorn.run(server.app, host="0.0.0.0", port=8081, log_level="info")
 
 if __name__ == "__main__":
     main()

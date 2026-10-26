@@ -88,7 +88,7 @@ export function ReadyScene() {
           <div className="p-1.5 bg-stone-50 border border-stone-300 rounded">ESP32 TARGET</div>
           <div className="p-1.5 bg-stone-50 border border-stone-300 rounded">YOLO11n ONNX</div>
           <div className="p-1.5 bg-stone-50 border border-stone-300 rounded">RTSP 554</div>
-          <div className="p-1.5 bg-stone-50 border border-stone-300 rounded">FASTAPI 8000</div>
+          <div className="p-1.5 bg-stone-50 border border-stone-300 rounded">FASTAPI 8080</div>
         </div>
       </div>
     </div>

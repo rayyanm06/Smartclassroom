@@ -6,7 +6,8 @@ export type OccupancyState =
   | 'EXPECTED_OCCUPANCY'
   | 'UNEXPECTED_OCCUPANCY'
   | 'OCCUPANCY_ANOMALY'
-  | 'SENSOR_UNCERTAIN';
+  | 'SENSOR_UNCERTAIN'
+  | 'UNKNOWN';
 
 export type ConfidenceLevel = 'high' | 'medium' | 'low';
 
@@ -21,6 +22,15 @@ export type AlertType =
   | 'CAMERA_OFFLINE';
 
 export type AlertStatus = 'open' | 'acknowledged' | 'resolved';
+
+export interface DeviceCommandItem {
+  id: number;
+  device: 'ac' | 'light';
+  command: 'on' | 'off';
+  status: 'pending' | 'acked' | 'expired';
+  created_at: string;
+  acked_at: string | null;
+}
 
 export interface Classroom {
   id: string; // e.g. 'A101'
@@ -62,6 +72,25 @@ export interface ClassroomState {
 
 export interface ClassroomWithState extends Classroom {
   state: ClassroomState;
+  recent_commands?: DeviceCommandItem[];
+  current_entry?: {
+    id: number;
+    subject: string;
+    faculty: string;
+    start_time: string;
+    end_time: string;
+    class_type: string;
+  } | null;
+  next_entry?: {
+    id: number;
+    subject: string;
+    faculty: string;
+    start_time: string;
+    end_time: string;
+    class_type: string;
+  } | null;
+  open_alerts?: Alert[];
+  simulated_state?: SimulatedClassroomState;
 }
 
 export interface TimetableEntry {
@@ -101,12 +130,54 @@ export interface DashboardSummary {
   unexpected_now: number;
   anomalies: number;
   sensor_uncertain: number;
+  unknown_now?: number;
+  cameras_offline?: number;
+  sensors_offline?: number;
   energy_alerts: number;
   rooms_in_use_pct: number;
   seat_utilization_pct: number;
   avg_temperature: number;
   camera_feeds_active: string; // e.g. "1 / 1"
   sensors_online: string; // e.g. "12 / 12"
+  simulation_enabled?: boolean;
+  simulated_appliances_on?: number;
+  possible_energy_waste_rooms?: number;
+}
+
+export interface SimulatedCommandItem {
+  id: number;
+  classroom_id: string;
+  device: 'ac' | 'light';
+  command: 'on' | 'off';
+  status: string;
+  resulting_state: boolean;
+  detail: string;
+  created_at: string;
+}
+
+export interface SimulatedClassroomState {
+  classroom_id: string;
+  ac_simulated: boolean;
+  light_simulated: boolean;
+  ac_switched_at: string;
+  light_switched_at: string;
+  energy_consumed_kwh: number;
+  energy_saved_kwh: number;
+  energy_wasted_kwh: number;
+  updated_at: string;
+  recent_commands: SimulatedCommandItem[];
+}
+
+export interface SimulationStatus {
+  simulation_enabled: boolean;
+  banner_message: string;
+  total_simulated_appliances_on: number;
+  simulated_ac_on_count: number;
+  simulated_lights_on_count: number;
+  total_energy_consumed_kwh: number;
+  total_energy_saved_kwh: number;
+  total_energy_wasted_kwh: number;
+  rooms_with_waste: string[];
 }
 
 export interface EnergyRecommendation {

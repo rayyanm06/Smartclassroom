@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
-import { Save, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Save, CheckCircle2 } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
   const queryClient = useQueryClient();

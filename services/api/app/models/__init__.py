@@ -8,6 +8,7 @@ from app.models.alert import Alert
 from app.models.command import DeviceCommand
 from app.models.setting import Setting
 from app.models.prediction import PredictionModel
+from app.models.simulation import SimulatedApplianceState, SimulatedCommand
 
 __all__ = [
     "Base",
@@ -21,4 +22,6 @@ __all__ = [
     "DeviceCommand",
     "Setting",
     "PredictionModel",
+    "SimulatedApplianceState",
+    "SimulatedCommand",
 ]

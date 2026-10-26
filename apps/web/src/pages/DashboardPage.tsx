@@ -62,7 +62,10 @@ export const DashboardPage: React.FC = () => {
       ? classrooms
       : classrooms.filter((c) => c.building === selectedBlock);
 
-  const cameraClassroom = classrooms.find((c) => c.has_camera) || classrooms[0];
+  const cameraClassroom =
+    classrooms.find((c) => c.id === '508') ||
+    classrooms.find((c) => c.has_camera) ||
+    classrooms[0];
 
   return (
     <div className="space-y-5">
@@ -103,7 +106,7 @@ export const DashboardPage: React.FC = () => {
       {/* KPI 8-Cell Strip (§13, §21) */}
       {summary && <KpiStrip summary={summary} />}
 
-      {/* Main Grid: Left 2/3 Classrooms by Block, Right 1/3 Attention + A101 Camera (§21) */}
+      {/* Main Grid: Left 2/3 Classrooms by Block, Right 1/3 Attention + Camera Panel */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Left 2/3: Classroom Matrix Grouped by Block */}
         <div className="lg:col-span-2 space-y-4">
@@ -147,13 +150,14 @@ export const DashboardPage: React.FC = () => {
               </div>
             </div>
 
-            {/* State Color & Label Legend (§21) */}
+            {/* State Color & Label Legend */}
             <div className="flex flex-wrap items-center gap-2 pt-1 pb-2 border-b border-neutral-200 text-[10px] font-mono">
               <span className="text-neutral-500 font-bold uppercase">STATE LEGEND:</span>
               {(
                 [
                   'OCCUPIED',
                   'EMPTY',
+                  'UNKNOWN',
                   'EXPECTED_OCCUPANCY',
                   'UNEXPECTED_OCCUPANCY',
                   'OCCUPANCY_ANOMALY',
@@ -161,6 +165,7 @@ export const DashboardPage: React.FC = () => {
                 ] as OccupancyState[]
               ).map((st) => {
                 const s = OCCUPANCY_STATE_STYLES[st];
+                if (!s) return null;
                 return (
                   <span
                     key={st}

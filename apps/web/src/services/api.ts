@@ -9,6 +9,8 @@ import type {
   AnalyticsKpis,
   UnderutilizedRoom,
   SettingsResponse,
+  SimulationStatus,
+  SimulatedClassroomState,
 } from '../types';
 import {
   MOCK_CLASSROOMS,
@@ -41,6 +43,15 @@ export interface ApiClient {
   switchPreset(name: string): Promise<SettingsResponse>;
   getAnalyticsKpis(): Promise<AnalyticsKpis>;
   getUnderutilizedRooms(): Promise<UnderutilizedRoom[]>;
+  getSimulationStatus(): Promise<SimulationStatus>;
+  setSimulationMode(enabled: boolean): Promise<SimulationStatus>;
+  getSimulatedClassrooms(): Promise<Record<string, SimulatedClassroomState>>;
+  getSimulatedClassroom(id: string): Promise<SimulatedClassroomState>;
+  dispatchSimulatedAction(
+    classroomId: string,
+    action: { device: 'ac' | 'light'; command: 'on' | 'off' }
+  ): Promise<SimulatedClassroomState>;
+  resetSimulation(): Promise<{ success: boolean; message: string }>;
 }
 
 
@@ -177,6 +188,54 @@ const MockAdapter: ApiClient = {
   async getUnderutilizedRooms(): Promise<UnderutilizedRoom[]> {
     return Promise.resolve([]);
   },
+
+  async getSimulationStatus(): Promise<SimulationStatus> {
+    return Promise.resolve({
+      simulation_enabled: true,
+      banner_message: 'SIMULATION MODE — AC AND LIGHTS ARE VIRTUAL. NO PHYSICAL APPLIANCES ARE CONTROLLED.',
+      total_simulated_appliances_on: 0,
+      simulated_ac_on_count: 0,
+      simulated_lights_on_count: 0,
+      total_energy_consumed_kwh: 0,
+      total_energy_saved_kwh: 0,
+      total_energy_wasted_kwh: 0,
+      rooms_with_waste: [],
+    });
+  },
+
+  async setSimulationMode(_enabled: boolean): Promise<SimulationStatus> {
+    return this.getSimulationStatus();
+  },
+
+  async getSimulatedClassrooms(): Promise<Record<string, SimulatedClassroomState>> {
+    return Promise.resolve({});
+  },
+
+  async getSimulatedClassroom(id: string): Promise<SimulatedClassroomState> {
+    return Promise.resolve({
+      classroom_id: id,
+      ac_simulated: false,
+      light_simulated: false,
+      ac_switched_at: new Date().toISOString(),
+      light_switched_at: new Date().toISOString(),
+      energy_consumed_kwh: 0,
+      energy_saved_kwh: 0,
+      energy_wasted_kwh: 0,
+      updated_at: new Date().toISOString(),
+      recent_commands: [],
+    });
+  },
+
+  async dispatchSimulatedAction(
+    classroomId: string,
+    _action: { device: 'ac' | 'light'; command: 'on' | 'off' }
+  ): Promise<SimulatedClassroomState> {
+    return this.getSimulatedClassroom(classroomId);
+  },
+
+  async resetSimulation(): Promise<{ success: boolean; message: string }> {
+    return Promise.resolve({ success: true, message: 'Simulation reset' });
+  },
 };
 
 const HttpAdapter: ApiClient = {
@@ -199,6 +258,10 @@ const HttpAdapter: ApiClient = {
     return {
       ...data.classroom,
       state: data.state,
+      recent_commands: data.recent_commands || [],
+      current_entry: data.current_entry,
+      next_entry: data.next_entry,
+      open_alerts: data.open_alerts || [],
     };
   },
 
@@ -293,6 +356,55 @@ const HttpAdapter: ApiClient = {
 
   async getUnderutilizedRooms(): Promise<UnderutilizedRoom[]> {
     const res = await fetch(`${API_BASE}/api/analytics/underutilized`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+
+  async getSimulationStatus(): Promise<SimulationStatus> {
+    const res = await fetch(`${API_BASE}/api/simulation/status`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+
+  async setSimulationMode(enabled: boolean): Promise<SimulationStatus> {
+    const res = await fetch(`${API_BASE}/api/simulation/mode`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+
+  async getSimulatedClassrooms(): Promise<Record<string, SimulatedClassroomState>> {
+    const res = await fetch(`${API_BASE}/api/simulation/classrooms`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+
+  async getSimulatedClassroom(id: string): Promise<SimulatedClassroomState> {
+    const res = await fetch(`${API_BASE}/api/simulation/classrooms/${id}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+
+  async dispatchSimulatedAction(
+    classroomId: string,
+    action: { device: 'ac' | 'light'; command: 'on' | 'off' }
+  ): Promise<SimulatedClassroomState> {
+    const res = await fetch(`${API_BASE}/api/simulation/classrooms/${classroomId}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(action),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+
+  async resetSimulation(): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${API_BASE}/api/simulation/reset`, {
+      method: 'POST',
+    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   },

@@ -78,8 +78,8 @@ const STORY_STEPS: StoryStep[] = [
     number: '10',
     title: 'HOST TELEMETRY DASHBOARD',
     tag: 'CENTRAL PLATFORM',
-    desc: 'Unified FastAPI 8000 and MySQL platform processing real-time occupancy counts, timetable scheduling, power metrics, and relay control.',
-    spec: ['Backend: FastAPI (Port 8000)', 'Database: MySQL 8.0 (Port 3306)', 'Frontend: React + Vite (Port 5173)'],
+    desc: 'Unified FastAPI 8080 and MySQL platform processing real-time occupancy counts, timetable scheduling, power metrics, and relay control.',
+    spec: ['Backend: FastAPI (Port 8080)', 'Database: MySQL 8.0 (Port 3306)', 'Frontend: React + Vite (Port 5173)'],
   },
 ];
 

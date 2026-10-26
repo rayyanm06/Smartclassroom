@@ -10,7 +10,7 @@ interface RoomPlateProps {
 
 export const RoomPlate: React.FC<RoomPlateProps> = ({ classroom }) => {
   const { state } = classroom;
-  const style = OCCUPANCY_STATE_STYLES[state.occupancy_state];
+  const style = OCCUPANCY_STATE_STYLES[state.occupancy_state] || OCCUPANCY_STATE_STYLES.UNKNOWN;
 
   return (
     <Link
@@ -25,8 +25,10 @@ export const RoomPlate: React.FC<RoomPlateProps> = ({ classroom }) => {
           </span>
           {classroom.has_camera && (
             <span
-              className="p-1 bg-neutral-100 border border-ink text-neutral-800"
-              title="Camera Telemetry Node Installed"
+              className={`p-1 border border-ink ${
+                state.camera_online ? 'bg-neutral-100 text-neutral-800' : 'bg-red-50 text-red-600'
+              }`}
+              title={state.camera_online ? 'Camera Online' : 'Camera Offline'}
             >
               <Video size={12} />
             </span>
@@ -46,8 +48,10 @@ export const RoomPlate: React.FC<RoomPlateProps> = ({ classroom }) => {
         <div className="flex items-center justify-between text-neutral-600">
           <span>PEOPLE COUNT:</span>
           <span className="font-bold text-[#111111]">
-            {classroom.has_camera && state.people_count !== null
-              ? `${state.people_count} pers.`
+            {classroom.has_camera
+              ? state.camera_online && state.people_count !== null
+                ? `${state.people_count} pers.`
+                : 'UNAVAILABLE'
               : '—'}
           </span>
         </div>

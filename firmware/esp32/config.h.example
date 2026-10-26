@@ -1,0 +1,31 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+// ==============================================================================
+// Smart Classroom ESP32 Node Configuration Template
+// Copy this file to "config.h" and insert your local network credentials.
+// "config.h" is git-ignored to prevent exposing secrets.
+// ==============================================================================
+
+// 1. Wi-Fi Configuration
+#define WIFI_SSID     "YOUR_WIFI_OR_HOTSPOT_SSID"
+#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
+
+// 2. Backend Server Configuration
+// Use the computer's LAN IPv4 address (e.g. 172.20.10.4:8080), NEVER 127.0.0.1
+#define API_BASE_URL  "http://172.20.10.4:8080"
+#define SENSOR_ENDPOINT "/api/sensor-data"
+
+// 3. Security Header
+// Must match DEVICE_KEY in your server's .env file
+#define DEVICE_KEY    "dev-secret-device-key-2026"
+
+// 4. Hardware & Room Identity
+#define CLASSROOM_ID  "508"
+#define DEVICE_ID     "esp32-508-hardware"
+
+// 5. Timings (milliseconds)
+#define HEARTBEAT_INTERVAL_MS 10000   // Regular telemetry post (10s)
+#define MOTION_COOLDOWN_MS    4000    // Minimum duration between motion events
+
+#endif // CONFIG_H

@@ -78,7 +78,7 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
                 unexpected_count += 1
             elif st == "OCCUPANCY_ANOMALY":
                 anomalies_count += 1
-            elif st == "SENSOR_UNCERTAIN":
+            elif st in ["SENSOR_UNCERTAIN", "UNKNOWN"]:
                 uncertain_count += 1
 
             if c.state.temperature is not None:
@@ -100,6 +100,31 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
     )
     avg_temp = round(total_temp / temp_count, 1) if temp_count > 0 else 27.0
 
+    # Simulation metrics
+    from app.models.setting import Setting
+    from app.models.simulation import SimulatedApplianceState
+    sim_setting = db.scalars(select(Setting).where(Setting.key == "simulation_mode")).first()
+    simulation_enabled = bool(sim_setting.value.get("enabled", True)) if sim_setting else True
+
+    sim_appliances_on = 0
+    possible_waste_count = 0
+    if simulation_enabled:
+        sim_states = db.scalars(select(SimulatedApplianceState)).all()
+        sim_state_map = {s.classroom_id: s for s in sim_states}
+        for c in classrooms:
+            s = sim_state_map.get(c.id)
+            if s:
+                if s.ac_simulated:
+                    sim_appliances_on += 1
+                if s.light_simulated:
+                    sim_appliances_on += 1
+                if c.state and c.state.occupancy_state == "EMPTY" and (s.ac_simulated or s.light_simulated):
+                    possible_waste_count += 1
+    else:
+        for c in classrooms:
+            if c.state and c.state.occupancy_state == "EMPTY" and (c.state.ac_status or c.state.light_status):
+                possible_waste_count += 1
+
     return {
         "total_classrooms": total_classrooms,
         "occupied_now": occupied_count,
@@ -108,57 +133,101 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
         "unexpected_now": unexpected_count,
         "anomalies": anomalies_count,
         "sensor_uncertain": uncertain_count,
+        "unknown_now": uncertain_count,
+        "cameras_offline": max(0, camera_installed - camera_online),
+        "sensors_offline": max(0, sensor_installed - sensor_online),
         "energy_alerts": energy_alerts_count,
         "rooms_in_use_pct": rooms_in_use_pct,
         "seat_utilization_pct": seat_util_pct,
         "avg_temperature": avg_temp,
         "camera_feeds_active": f"{camera_online} / {camera_installed}",
         "sensors_online": f"{sensor_online} / {sensor_installed}",
+        "simulation_enabled": simulation_enabled,
+        "simulated_appliances_on": sim_appliances_on,
+        "possible_energy_waste_rooms": possible_waste_count,
     }
 
 @router.get("/energy-recommendations")
 def get_energy_recommendations(db: Session = Depends(get_db)):
-    """Computes actionable energy saving recommendations from real empty classrooms with active appliances."""
+    """Computes actionable energy saving recommendations from classrooms with active appliances."""
+    from app.models.setting import Setting
+    from app.models.simulation import SimulatedApplianceState
+    sim_setting = db.scalars(select(Setting).where(Setting.key == "simulation_mode")).first()
+    simulation_enabled = bool(sim_setting.value.get("enabled", True)) if sim_setting else True
+
     classrooms = db.scalars(select(Classroom)).all()
     recommendations = []
     total_waste_kwh = 0.0
+
+    sim_states = {}
+    if simulation_enabled:
+        sim_states = {s.classroom_id: s for s in db.scalars(select(SimulatedApplianceState)).all()}
 
     for c in classrooms:
         state = c.state
         if not state:
             continue
-        if state.occupancy_state in ["EMPTY", "OCCUPANCY_ANOMALY"] and (state.ac_status or state.light_status):
-            ac_waste = (c.ac_rated_kw * (max(state.idle_minutes, 1) / 60.0)) if state.ac_status else 0.0
-            lt_waste = (c.lights_rated_kw * (max(state.idle_minutes, 1) / 60.0)) if state.light_status else 0.0
+
+        # Check either simulated or physical state depending on active mode
+        if simulation_enabled:
+            sim = sim_states.get(c.id)
+            ac_on = sim.ac_simulated if sim else False
+            lt_on = sim.light_simulated if sim else False
+            mode_prefix = "Simulated "
+        else:
+            ac_on = state.ac_status
+            lt_on = state.light_status
+            mode_prefix = ""
+
+        if not (ac_on or lt_on):
+            continue
+
+        # Differentiate CONFIRMED EMPTY vs UNKNOWN
+        if state.occupancy_state in ["EMPTY", "OCCUPANCY_ANOMALY"]:
+            ac_waste = (c.ac_rated_kw * (max(state.idle_minutes, 5) / 60.0)) if ac_on else 0.0
+            lt_waste = (c.lights_rated_kw * (max(state.idle_minutes, 5) / 60.0)) if lt_on else 0.0
             room_waste = round(ac_waste + lt_waste, 2)
             total_waste_kwh += room_waste
 
             actions = []
-            if state.ac_status:
+            if ac_on:
                 actions.append({"device": "ac", "command": "off"})
-            if state.light_status:
+            if lt_on:
                 actions.append({"device": "light", "command": "off"})
 
-            headline = (
-                f"AC & Lights active in empty {c.id}"
-                if state.ac_status and state.light_status
-                else f"AC active in empty {c.id}"
-                if state.ac_status
-                else f"Lights active in empty {c.id}"
-            )
+            headline = f"{mode_prefix}AC & Lights active in empty {c.id}" if (ac_on and lt_on) else f"{mode_prefix}AC active in empty {c.id}" if ac_on else f"{mode_prefix}Lights active in empty {c.id}"
 
             recommendations.append({
                 "classroom_id": c.id,
                 "building": c.building,
                 "floor": c.floor,
                 "headline": headline,
-                "context": f"Room {c.id} ({c.name}) appears unoccupied. Idle: {state.idle_minutes} min. Rated power: {c.ac_rated_kw} kW AC, {c.lights_rated_kw} kW Lights.",
+                "context": f"Room {c.id} is confirmed empty while its {mode_prefix.lower()}appliances are ON. Consider turning them OFF to reduce estimated energy use.",
                 "idle_minutes": state.idle_minutes,
-                "severity": "critical" if state.ac_status else "warning",
+                "severity": "critical" if ac_on else "warning",
                 "actions": actions,
                 "estimated_waste_kwh": room_waste,
-                "ac_status": state.ac_status,
-                "light_status": state.light_status,
+                "occupancy_confirmed": True,
+                "ac_status": ac_on,
+                "light_status": lt_on,
+                "is_simulation": simulation_enabled,
+            })
+        elif state.occupancy_state == "UNKNOWN":
+            # For UNKNOWN occupancy, do not claim empty or calculate definite waste
+            recommendations.append({
+                "classroom_id": c.id,
+                "building": c.building,
+                "floor": c.floor,
+                "headline": f"{mode_prefix}Appliances ON in {c.id} with unverified occupancy",
+                "context": f"Room {c.id} occupancy cannot be confirmed because camera feed is offline. Check the room or camera before deciding whether to turn appliances OFF.",
+                "idle_minutes": state.idle_minutes,
+                "severity": "info",
+                "actions": [],
+                "estimated_waste_kwh": 0.0,
+                "occupancy_confirmed": False,
+                "ac_status": ac_on,
+                "light_status": lt_on,
+                "is_simulation": simulation_enabled,
             })
 
     recommendations.sort(key=lambda x: x["estimated_waste_kwh"], reverse=True)
@@ -166,5 +235,6 @@ def get_energy_recommendations(db: Session = Depends(get_db)):
         "total_waste_kwh": round(total_waste_kwh, 2),
         "count": len(recommendations),
         "recommendations": recommendations,
+        "note": "Energy values are estimates based on configured simulation assumptions, not readings from a physical electricity meter.",
     }
 

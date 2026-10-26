@@ -13,6 +13,7 @@ export const CameraPage: React.FC = () => {
     refetchInterval: 3000,
   });
 
+  const isCameraOnline = Boolean(classroom?.state?.camera_online);
   const streamUrl = `/stream/${roomId}.mjpg`;
 
   return (
@@ -24,8 +25,14 @@ export const CameraPage: React.FC = () => {
           <p className="text-sm text-neutral-600">YOLO person detection stream, inference metrics, and privacy boundary controls</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="px-2.5 py-1 bg-[#2F9E44]/15 border border-[#2F9E44] text-[#2F9E44] font-mono text-xs font-bold">
-            STREAM ONLINE (5.2 FPS)
+          <span
+            className={`px-2.5 py-1 font-mono text-xs font-bold border ${
+              isCameraOnline
+                ? 'bg-[#2F9E44]/15 border-[#2F9E44] text-[#2F9E44]'
+                : 'bg-[#FFEBEB] border-[#D64545] text-[#D64545]'
+            }`}
+          >
+            {isCameraOnline ? 'STREAM ONLINE (5.2 FPS)' : 'STREAM OFFLINE · NO FEED'}
           </span>
         </div>
       </div>
@@ -44,7 +51,7 @@ export const CameraPage: React.FC = () => {
                 <AlertCircle size={40} className="mx-auto text-amber-500 mb-2" />
                 <div className="font-mono text-sm text-white font-bold uppercase">LIVE FEED DISCONNECTED</div>
                 <p className="text-xs text-neutral-400 mt-1 max-w-md">
-                  Vision service daemon offline at port 8001 or phone stream disconnected (§16).
+                  Vision service daemon offline or phone stream disconnected.
                 </p>
               </div>
             ) : (
@@ -56,8 +63,12 @@ export const CameraPage: React.FC = () => {
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-[#111111]/80 border border-white text-white font-mono text-[9px] font-bold flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#2F9E44] animate-pulse" />
-                  LIVE STREAM · ROOM {roomId}
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      isCameraOnline ? 'bg-[#2F9E44] animate-pulse' : 'bg-[#D64545]'
+                    }`}
+                  />
+                  {isCameraOnline ? `LIVE STREAM · ROOM ${roomId}` : `OFFLINE · ROOM ${roomId}`}
                 </div>
               </>
             )}
@@ -67,19 +78,21 @@ export const CameraPage: React.FC = () => {
             <div className="p-2 bg-[#F4F1EA] border border-neutral-300">
               <span className="text-neutral-500 block text-[10px]">PEOPLE DETECTED</span>
               <span className="text-lg font-bold text-[#111111]">
-                {classroom?.state?.people_count ?? 0} Persons
+                {isCameraOnline && classroom?.state?.people_count !== null && classroom?.state?.people_count !== undefined
+                  ? `${classroom?.state?.people_count} Persons`
+                  : 'UNAVAILABLE'}
               </span>
             </div>
             <div className="p-2 bg-[#F4F1EA] border border-neutral-300">
               <span className="text-neutral-500 block text-[10px]">OCCUPANCY STATE</span>
               <span className="text-lg font-bold text-[#111111]">
-                {classroom?.state?.occupancy_state ?? 'EMPTY'}
+                {classroom?.state?.occupancy_state ?? 'UNKNOWN'}
               </span>
             </div>
             <div className="p-2 bg-[#F4F1EA] border border-neutral-300">
               <span className="text-neutral-500 block text-[10px]">CONFIDENCE</span>
               <span className="text-lg font-bold text-[#2F9E44] uppercase">
-                {classroom?.state?.confidence_level ?? 'HIGH'}
+                {classroom?.state?.confidence_level ?? 'LOW'}
               </span>
             </div>
           </div>
